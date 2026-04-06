@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: B2B Event Management Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: events
+    description: Event operations
+  - name: sessions
+    description: Session operations
+  - name: attendees
+    description: Attendee operations
+  - name: speakers
+    description: Speaker operations
+  - name: analytics
+    description: Analytics operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,379 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List all events
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, cancelled, completed]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create an event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventBody"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Not found
+    put:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventBody"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /events/{id}/sessions:
+    get:
+      operationId: listEventSessions
+      tags: [sessions]
+      summary: List sessions for an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sessions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+
+  /sessions:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionBody"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}:
+    put:
+      operationId: updateSession
+      tags: [sessions]
+      summary: Update a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSessionBody"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+    delete:
+      operationId: deleteSession
+      tags: [sessions]
+      summary: Delete a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /events/{id}/attendees:
+    get:
+      operationId: listEventAttendees
+      tags: [attendees]
+      summary: List attendees for an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attendees list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendee"
+
+  /attendees:
+    post:
+      operationId: registerAttendee
+      tags: [attendees]
+      summary: Register an attendee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterAttendeeBody"
+      responses:
+        "201":
+          description: Registered attendee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendee"
+
+  /attendees/{id}:
+    put:
+      operationId: updateAttendee
+      tags: [attendees]
+      summary: Update attendee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAttendeeBody"
+      responses:
+        "200":
+          description: Updated attendee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendee"
+    delete:
+      operationId: deleteAttendee
+      tags: [attendees]
+      summary: Remove attendee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /speakers:
+    get:
+      operationId: listSpeakers
+      tags: [speakers]
+      summary: List all speakers
+      responses:
+        "200":
+          description: Speakers list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Speaker"
+    post:
+      operationId: createSpeaker
+      tags: [speakers]
+      summary: Create a speaker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSpeakerBody"
+      responses:
+        "201":
+          description: Created speaker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Speaker"
+
+  /speakers/{id}:
+    put:
+      operationId: updateSpeaker
+      tags: [speakers]
+      summary: Update a speaker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSpeakerBody"
+      responses:
+        "200":
+          description: Updated speaker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Speaker"
+    delete:
+      operationId: deleteSpeaker
+      tags: [speakers]
+      summary: Delete a speaker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /analytics/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [analytics]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /analytics/events/{id}:
+    get:
+      operationId: getEventAnalytics
+      tags: [analytics]
+      summary: Get analytics for a specific event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventAnalytics"
+
+  /analytics/recent-registrations:
+    get:
+      operationId: getRecentRegistrations
+      tags: [analytics]
+      summary: Get recent registrations activity feed
+      responses:
+        "200":
+          description: Recent registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegistrationActivity"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +417,437 @@ components:
       required:
         - status
 
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [draft, published, cancelled, completed]
+        maxAttendees:
+          type: integer
+        registeredCount:
+          type: integer
+        sessionCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - location
+        - startDate
+        - endDate
+        - status
+        - maxAttendees
+        - registeredCount
+        - sessionCount
+        - createdAt
+        - updatedAt
+
+    CreateEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [draft, published, cancelled, completed]
+        maxAttendees:
+          type: integer
+      required:
+        - title
+        - location
+        - startDate
+        - endDate
+        - maxAttendees
+
+    UpdateEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [draft, published, cancelled, completed]
+        maxAttendees:
+          type: integer
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        speakerId:
+          type: integer
+        speakerName:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        room:
+          type: string
+        track:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - eventId
+        - title
+        - startTime
+        - endTime
+        - createdAt
+
+    CreateSessionBody:
+      type: object
+      properties:
+        eventId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        speakerId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        room:
+          type: string
+        track:
+          type: string
+      required:
+        - eventId
+        - title
+        - startTime
+        - endTime
+
+    UpdateSessionBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        speakerId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        room:
+          type: string
+        track:
+          type: string
+
+    Attendee:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        status:
+          type: string
+          enum: [registered, confirmed, cancelled, attended]
+        registeredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - eventId
+        - firstName
+        - lastName
+        - email
+        - status
+        - registeredAt
+
+    RegisterAttendeeBody:
+      type: object
+      properties:
+        eventId:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+      required:
+        - eventId
+        - firstName
+        - lastName
+        - email
+
+    UpdateAttendeeBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        status:
+          type: string
+          enum: [registered, confirmed, cancelled, attended]
+
+    Speaker:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        bio:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - createdAt
+
+    CreateSpeakerBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        bio:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        avatarUrl:
+          type: string
+      required:
+        - firstName
+        - lastName
+        - email
+
+    UpdateSpeakerBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        bio:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        avatarUrl:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        totalEvents:
+          type: integer
+        activeEvents:
+          type: integer
+        totalAttendees:
+          type: integer
+        totalSessions:
+          type: integer
+        upcomingEvents:
+          type: integer
+        completedEvents:
+          type: integer
+        averageAttendance:
+          type: number
+        registrationsByMonth:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              count:
+                type: integer
+            required:
+              - month
+              - count
+        eventsByStatus:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              count:
+                type: integer
+            required:
+              - status
+              - count
+      required:
+        - totalEvents
+        - activeEvents
+        - totalAttendees
+        - totalSessions
+        - upcomingEvents
+        - completedEvents
+        - averageAttendance
+        - registrationsByMonth
+        - eventsByStatus
+
+    EventAnalytics:
+      type: object
+      properties:
+        eventId:
+          type: integer
+        title:
+          type: string
+        registrationRate:
+          type: number
+        confirmedCount:
+          type: integer
+        cancelledCount:
+          type: integer
+        attendedCount:
+          type: integer
+        sessionCount:
+          type: integer
+        speakerCount:
+          type: integer
+        registrationsByDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+            required:
+              - date
+              - count
+      required:
+        - eventId
+        - title
+        - registrationRate
+        - confirmedCount
+        - cancelledCount
+        - attendedCount
+        - sessionCount
+        - speakerCount
+        - registrationsByDay
+
+    RegistrationActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+        attendeeName:
+          type: string
+        attendeeEmail:
+          type: string
+        company:
+          type: string
+        eventTitle:
+          type: string
+        registeredAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+      required:
+        - id
+        - attendeeName
+        - attendeeEmail
+        - eventTitle
+        - registeredAt
+        - status
