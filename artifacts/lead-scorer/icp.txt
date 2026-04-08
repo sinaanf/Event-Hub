@@ -1,0 +1,28 @@
+Ideal Customer Profile (ICP) for LeadScorer
+
+Target Company:
+- Industry: B2B SaaS, Technology, or Professional Services
+- Company size: 50–500 employees (Series A to Series C funded)
+- Geography: North America or Western Europe
+- Annual revenue: $5M–$100M
+- Growth stage: Scaling teams, hiring actively, expanding market reach
+
+Target Persona:
+- Title: VP of Sales, Head of Growth, Director of Marketing, Chief Revenue Officer (CRO), or similar revenue/growth leadership
+- Seniority: Director level and above
+- Responsibilities: Owns pipeline generation, go-to-market strategy, or revenue targets
+- Pain points: Struggling with lead quality, manual prospecting, or slow sales cycles
+
+Positive Signals (increase score):
+- Decision-maker or budget holder
+- Works at a company with active hiring in sales/marketing roles
+- LinkedIn profile with 500+ connections
+- Has posted or engaged with topics around sales automation, RevOps, or lead generation
+- Company recently raised funding or announced expansion
+
+Negative Signals (decrease score):
+- Student, intern, or entry-level role
+- Works at a company with fewer than 10 employees or more than 10,000 employees
+- Non-commercial domains (academia, government, NGO)
+- No email address or LinkedIn profile available
+- Title is purely technical with no commercial overlap (e.g., pure software engineer, devops)

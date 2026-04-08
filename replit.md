@@ -21,6 +21,10 @@ pnpm workspace monorepo using TypeScript. Contains EventHub — a B2B event mana
 
 - **event-platform** — B2B event management frontend (React + Vite), served at `/`
 - **api-server** — Express 5 REST API, served at `/api`
+- **lead-scorer** — Python Flask lead extraction & scoring tool, served at `/lead-scorer/`
+  - Scrapes URLs with Playwright (headless Chromium), extracts leads via Claude (`claude-sonnet-4-20250514`), scores against ICP in `icp.txt`
+  - Requires `ANTHROPIC_API_KEY` secret
+  - Python 3.11 + Flask + anthropic + playwright; uses system Chromium (`chromium` Nix package)
 
 ## Key Commands
 

@@ -1,0 +1,18 @@
+kind = "web"
+previewPath = "/lead-scorer/"
+title = "Lead Extractor & Scorer"
+version = "1.0.0"
+id = "artifacts/lead-scorer"
+router = "path"
+
+[[services]]
+name = "web"
+paths = ["/lead-scorer/"]
+localPort = 5001
+
+[services.development]
+run = "cd /home/runner/workspace && PORT=5001 BASE_PATH=/lead-scorer bash artifacts/lead-scorer/start.sh"
+
+[services.env]
+PORT = "5001"
+BASE_PATH = "/lead-scorer"
