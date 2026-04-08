@@ -62,26 +62,31 @@
     }
 
     .nav-link {
-      color: rgba(255,255,255,0.65);
+      color: #fff;
       text-decoration: none;
       font-size: 0.88rem;
-      transition: color 0.15s;
-    }
-
-    .nav-link:hover { color: #fff; }
-
-    .logout-link {
-      color: rgba(255,255,255,0.5);
-      text-decoration: none;
-      font-size: 0.82rem;
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,0,0,0.25);
       padding: 0.3rem 0.75rem;
       border-radius: 6px;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.15s;
+    }
+
+    .nav-link:hover { background: rgba(0,0,0,0.32); }
+
+    .logout-link {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.82rem;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,0,0,0.25);
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      transition: background 0.15s;
     }
 
     .logout-link:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.32);
       color: #fff;
     }
 
