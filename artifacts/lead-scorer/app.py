@@ -235,6 +235,10 @@ def login():
             session["logged_in"] = True
             session["is_admin"] = False
             return redirect(BASE_PATH + "/")
+        elif username == config.ADMIN_USERNAME and password == config.ADMIN_PASSWORD:
+            session["logged_in"] = True
+            session["is_admin"] = True
+            return redirect(BASE_PATH + "/")
         else:
             error = "Invalid username or password."
     return render_template("login.html", base_path=BASE_PATH, error=error)
@@ -272,7 +276,7 @@ def logout():
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html", base_path=BASE_PATH)
+    return render_template("index.html", base_path=BASE_PATH, is_admin=session.get("is_admin", False))
 
 
 @app.route(BASE_PATH + "/admin")
