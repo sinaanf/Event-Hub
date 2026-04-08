@@ -279,6 +279,14 @@ def index():
     return render_template("index.html", base_path=BASE_PATH, is_admin=session.get("is_admin", False))
 
 
+@app.route(BASE_PATH + "/icp")
+@app.route("/icp")
+@login_required
+def view_icp():
+    icp = load_icp()
+    return render_template("icp_view.html", base_path=BASE_PATH, icp=icp, is_admin=session.get("is_admin", False))
+
+
 @app.route(BASE_PATH + "/admin")
 @app.route("/admin")
 @admin_required
