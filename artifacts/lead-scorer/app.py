@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import time
 import ipaddress
 import socket
 from urllib.parse import urlparse
@@ -86,6 +87,11 @@ def scrape_page(url: str) -> dict:
                 page.wait_for_load_state("networkidle", timeout=10000)
             except PlaywrightTimeout:
                 pass
+
+            time.sleep(5)
+
+            raw_html = page.content()
+            print(raw_html)
 
             text = page.evaluate("""() => {
                 const selectors = ['script', 'style', 'noscript', 'svg', 'path'];
