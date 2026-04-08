@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sinoo — Admin Login</title>
+  <title>sinoo — Admin Login</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,14 +29,14 @@
     .logo {
       font-size: 1.5rem;
       font-weight: 800;
-      color: #1a1a2e;
+      color: #71896B;
       letter-spacing: -0.5px;
       margin-bottom: 0.35rem;
     }
 
     .badge {
       display: inline-block;
-      background: #1a1a2e;
+      background: #71896B;
       color: #fff;
       font-size: 0.7rem;
       font-weight: 700;
@@ -80,8 +80,8 @@
     }
 
     input:focus {
-      border-color: #1a1a2e;
-      box-shadow: 0 0 0 3px rgba(26,26,46,0.10);
+      border-color: #71896B;
+      box-shadow: 0 0 0 3px rgba(113,137,107,0.18);
     }
 
     .error {
@@ -96,7 +96,7 @@
 
     .btn-primary {
       width: 100%;
-      background: #1a1a2e;
+      background: #71896B;
       color: #fff;
       border: none;
       padding: 0.75rem 1rem;
@@ -107,7 +107,7 @@
       transition: background 0.2s;
     }
 
-    .btn-primary:hover { background: #16213e; }
+    .btn-primary:hover { background: #5a7055; }
 
     .back-link {
       display: block;
@@ -123,7 +123,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="logo">Sinoo <span class="badge">Admin</span></div>
+    <div class="logo">sinoo <span class="badge">Admin</span></div>
     <div class="subtitle">Admin access — ICP editor and settings</div>
 
     {% if error %}
