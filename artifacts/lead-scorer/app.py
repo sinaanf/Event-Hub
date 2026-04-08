@@ -4,15 +4,18 @@ import re
 import time
 import ipaddress
 import socket
+from functools import wraps
 from urllib.parse import urlparse
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 import anthropic
+import config
 
 BASE_PATH = os.environ.get("BASE_PATH", "/lead-scorer/").rstrip("/")
 
 app = Flask(__name__)
 app.config["APPLICATION_ROOT"] = BASE_PATH + "/"
+app.secret_key = config.SECRET_KEY
 
 ICP_FILE = os.path.join(os.path.dirname(__file__), "icp.txt")
 
@@ -27,6 +30,33 @@ _PRIVATE_RANGES = [
     ipaddress.ip_network("fe80::/10"),
 ]
 
+
+# ---------------------------------------------------------------------------
+# Auth helpers
+# ---------------------------------------------------------------------------
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(BASE_PATH + "/login")
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("is_admin"):
+            return redirect(BASE_PATH + "/login")
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ---------------------------------------------------------------------------
+# SSRF protection
+# ---------------------------------------------------------------------------
+
 def _is_private_ip(host: str) -> bool:
     try:
         infos = socket.getaddrinfo(host, None)
@@ -39,8 +69,8 @@ def _is_private_ip(host: str) -> bool:
     except Exception:
         return True
 
+
 def validate_url(url: str) -> str | None:
-    """Returns an error message if the URL is unsafe, or None if it's fine."""
     try:
         parsed = urlparse(url)
     except Exception:
@@ -61,12 +91,23 @@ def validate_url(url: str) -> str | None:
 
     return None
 
+
+# ---------------------------------------------------------------------------
+# ICP + scraping
+# ---------------------------------------------------------------------------
+
 def load_icp():
     try:
         with open(ICP_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()
     except FileNotFoundError:
         return "No ICP defined."
+
+
+def save_icp(content: str):
+    with open(ICP_FILE, "w", encoding="utf-8") as f:
+        f.write(content)
+
 
 def scrape_page(url: str) -> dict:
     import shutil
@@ -113,6 +154,7 @@ def scrape_page(url: str) -> dict:
             }
         finally:
             browser.close()
+
 
 def extract_and_score_leads(scraped_text: str, links: list) -> list:
     icp = load_icp()
@@ -171,7 +213,6 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text
     )
 
     raw = message.content[0].text.strip()
-
     raw = re.sub(r"^```[a-z]*\n?", "", raw)
     raw = re.sub(r"\n?```$", "", raw)
 
@@ -179,15 +220,85 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text
     return leads
 
 
+# ---------------------------------------------------------------------------
+# Auth routes
+# ---------------------------------------------------------------------------
+
+@app.route(BASE_PATH + "/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        if username == config.USER_USERNAME and password == config.USER_PASSWORD:
+            session["logged_in"] = True
+            session["is_admin"] = False
+            return redirect(BASE_PATH + "/")
+        else:
+            error = "Invalid username or password."
+    return render_template("login.html", base_path=BASE_PATH, error=error)
+
+
+@app.route(BASE_PATH + "/admin/login", methods=["GET", "POST"])
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        if username == config.ADMIN_USERNAME and password == config.ADMIN_PASSWORD:
+            session["logged_in"] = True
+            session["is_admin"] = True
+            return redirect(BASE_PATH + "/admin")
+        else:
+            error = "Invalid admin credentials."
+    return render_template("admin_login.html", base_path=BASE_PATH, error=error)
+
+
+@app.route(BASE_PATH + "/logout")
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(BASE_PATH + "/login")
+
+
+# ---------------------------------------------------------------------------
+# Main app routes
+# ---------------------------------------------------------------------------
+
 @app.route(BASE_PATH + "/")
 @app.route(BASE_PATH)
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html", base_path=BASE_PATH)
 
 
+@app.route(BASE_PATH + "/admin")
+@app.route("/admin")
+@admin_required
+def admin():
+    icp = load_icp()
+    return render_template("admin.html", base_path=BASE_PATH, icp=icp)
+
+
+@app.route(BASE_PATH + "/admin/save-icp", methods=["POST"])
+@app.route("/admin/save-icp", methods=["POST"])
+@admin_required
+def save_icp_route():
+    content = request.form.get("icp", "").strip()
+    save_icp(content)
+    return redirect(BASE_PATH + "/admin?saved=1")
+
+
+# ---------------------------------------------------------------------------
+# Scrape API
+# ---------------------------------------------------------------------------
+
 @app.route(BASE_PATH + "/scrape", methods=["POST"])
 @app.route("/scrape", methods=["POST"])
+@login_required
 def scrape():
     data = request.get_json(force=True)
     url = (data or {}).get("url", "").strip()
