@@ -446,6 +446,7 @@
       }
 
       const leads = data.leads || [];
+      const totalDetected = data.total_detected ?? leads.length;
 
       spinner.classList.remove("visible");
 
@@ -458,7 +459,7 @@
             .join("");
 
       const count = leads.length;
-      resultsHeading.textContent = `${count} lead${count !== 1 ? "s" : ""} found`;
+      resultsHeading.textContent = `${count} of ${totalDetected} lead${totalDetected !== 1 ? "s" : ""} found`;
       sourceUrl.textContent = data.url || url;
       resultsSection.classList.add("visible");
 

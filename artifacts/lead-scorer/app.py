@@ -190,21 +190,25 @@ def extract_and_score_leads(scraped_text: str, links: list) -> list:
    - 40–69: Moderate match (amber)
    - 0–39: Poor match (red)
 4. Write a brief reason (1–2 sentences) explaining the score.
-5. If no identifiable people are found, return an empty array.
+5. Also count every person you can detect anywhere on the page — including those mentioned in passing, listed without full details, or otherwise not extractable as complete leads. Report this as "total_detected".
+6. If no identifiable people are found, return an empty leads array and total_detected of 0.
 
-Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text. Example format:
-[
-  {{
-    "first_name": "Jane",
-    "last_name": "Smith",
-    "title": "VP of Sales",
-    "company": "Acme Corp",
-    "email": "jane@acme.com",
-    "linkedin": "https://linkedin.com/in/janesmith",
-    "score": 85,
-    "reason": "Decision-maker in a mid-size SaaS company with direct revenue responsibility."
-  }}
-]"""
+Respond ONLY with a valid JSON object. No markdown, no code fences, no extra text. Example format:
+{{
+  "total_detected": 42,
+  "leads": [
+    {{
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "title": "VP of Sales",
+      "company": "Acme Corp",
+      "email": "jane@acme.com",
+      "linkedin": "https://linkedin.com/in/janesmith",
+      "score": 85,
+      "reason": "Decision-maker in a mid-size SaaS company with direct revenue responsibility."
+    }}
+  ]
+}}"""
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -216,8 +220,12 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text
     raw = re.sub(r"^```[a-z]*\n?", "", raw)
     raw = re.sub(r"\n?```$", "", raw)
 
-    leads = json.loads(raw)
-    return leads
+    parsed = json.loads(raw)
+    if isinstance(parsed, list):
+        return {"leads": parsed, "total_detected": len(parsed)}
+    leads = parsed.get("leads", [])
+    total_detected = parsed.get("total_detected", len(leads))
+    return {"leads": leads, "total_detected": total_detected}
 
 
 # ---------------------------------------------------------------------------
@@ -343,7 +351,7 @@ def scrape():
         app.logger.error("Extraction error: %s", e)
         return jsonify({"error": "Lead extraction failed. Please try again."}), 500
 
-    return jsonify({"leads": leads, "url": url})
+    return jsonify({"leads": leads["leads"], "total_detected": leads["total_detected"], "url": url})
 
 
 if __name__ == "__main__":
