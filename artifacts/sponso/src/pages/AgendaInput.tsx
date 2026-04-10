@@ -1,23 +1,81 @@
+const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
+
 export default function AgendaInput() {
   return (
     <div className="flex-1 p-8">
       <div className="max-w-2xl">
         <h1 className="text-xl font-semibold text-foreground mb-1">Agenda Input</h1>
-        <p className="text-sm text-muted-foreground mb-8">
+        <p className="text-sm text-muted-foreground mb-6">
           Paste your event agenda and we'll extract session topics, speakers, and themes to build your prospect targeting strategy.
         </p>
 
-        <div className="bg-white border border-border rounded-xl p-8 flex flex-col items-center justify-center min-h-64 text-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[hsl(243,75%,97%)] flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(243,75%,55%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-              <line x1="16" x2="16" y1="2" y2="6"/>
-              <line x1="8" x2="8" y1="2" y2="6"/>
-              <line x1="3" x2="21" y1="10" y2="10"/>
-            </svg>
+        {/* Progress steps */}
+        <div className="flex items-center gap-0 mb-8">
+          {STEPS.map((step, i) => {
+            const isActive = i === 0;
+            const isComplete = false;
+            return (
+              <div key={step} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
+                      isActive
+                        ? "bg-[hsl(243,75%,59%)] text-white"
+                        : "bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
+                  <span
+                    className={`text-sm ${
+                      isActive ? "text-foreground font-medium" : "text-muted-foreground"
+                    }`}
+                  >
+                    {step}
+                  </span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className="w-10 h-px bg-border mx-3" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Form */}
+        <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground" htmlFor="event-name">
+              Event name
+            </label>
+            <input
+              id="event-name"
+              type="text"
+              placeholder="e.g. FinTech Connect Europe 2025"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:border-transparent transition"
+            />
           </div>
-          <p className="text-sm font-medium text-foreground">Agenda input coming soon</p>
-          <p className="text-xs text-muted-foreground">Paste your agenda or upload a file to get started</p>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground" htmlFor="agenda">
+              Event agenda
+            </label>
+            <textarea
+              id="agenda"
+              rows={12}
+              placeholder={`09:00 — Opening keynote: The future of embedded finance\n10:00 — Panel: Navigating AML compliance in 2025\n11:00 — Workshop: Building scalable payment infrastructure\n12:00 — Lunch break\n13:00 — Fireside chat: Open banking and the API economy\n14:00 — Deep dive: AI in fraud detection\n15:00 — Roundtable: Cross-border payments\n16:00 — Closing keynote: What's next for fintech regulation`}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:border-transparent transition resize-none leading-relaxed font-mono"
+            />
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-[hsl(243,75%,59%)] hover:bg-[hsl(243,75%,52%)] transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-2"
+            >
+              Generate value props →
+            </button>
+          </div>
         </div>
       </div>
     </div>
