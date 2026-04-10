@@ -8,6 +8,10 @@ const DOMAINS = [
   "ft.com", "reuters.com", "bloomberg.com", "businessinsider.com",
   "techcrunch.com", "forbes.com", "wired.com", "theguardian.com",
   "cityam.com", "fnlondon.com",
+  "esgtoday.com", "greenbiz.com", "responsible-investor.com", "sustainablebrands.com",
+  "businessgreen.com", "edie.net", "climatechangenews.com", "carbonbrief.org",
+  "environmentalleader.com", "sustainability.com", "eenews.net", "cleanenergywire.org",
+  "spglobal.com", "msci.com",
 ].join(",");
 
 function fromDate30DaysAgo(): string {
