@@ -19,14 +19,13 @@ router.post("/generate-value-props", async (req, res) => {
 
   try {
     const message = await client.messages.create({
-      model: "claude-opus-4-6",
+      model: "claude-opus-4-5",
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
 
-    let raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
-    raw = raw.replace(/^```[a-z]*\n?/m, "").replace(/\n?```$/m, "").trim();
+    const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
     const valueProps = JSON.parse(raw);
 
     res.json({ valueProps });
