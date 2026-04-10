@@ -6,6 +6,7 @@ import sessionsRouter from "./sessions";
 import attendeesRouter from "./attendees";
 import analyticsRouter from "./analytics";
 import valuePropsRouter from "./valueProps";
+import companyNewsRouter from "./companyNews";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(sessionsRouter);
 router.use(attendeesRouter);
 router.use(analyticsRouter);
 router.use(valuePropsRouter);
+router.use(companyNewsRouter);
 
 export default router;

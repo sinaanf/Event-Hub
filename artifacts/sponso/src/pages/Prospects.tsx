@@ -1,7 +1,128 @@
-import { useSponso } from "@/context/SponsoContext";
+import { useEffect, useState } from "react";
+import { useSponso, type ValueProp } from "@/context/SponsoContext";
 import { useLocation } from "wouter";
 
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
+
+type NewsArticle = {
+  title: string;
+  source: string;
+  publishedAt: string;
+  url: string;
+  salesAngle: string;
+};
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
+function CompanyIntelligence({ sponsorTag }: { sponsorTag: string }) {
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetch("/api/company-news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: sponsorTag }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.error) setError(data.error);
+        else setArticles(data.articles || []);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load news.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [sponsorTag]);
+
+  return (
+    <div className="mt-4 rounded-lg bg-gray-50 border border-gray-100 px-4 pt-3 pb-4">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        Company intelligence · {sponsorTag}
+      </p>
+
+      {loading && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+          <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Fetching latest news…
+        </div>
+      )}
+
+      {!loading && error && (
+        <p className="text-xs text-muted-foreground py-1">{error}</p>
+      )}
+
+      {!loading && !error && articles.length === 0 && (
+        <p className="text-xs text-muted-foreground py-1">No recent news found for this category.</p>
+      )}
+
+      {!loading && articles.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {articles.map((article, i) => (
+            <div key={i} className={i < articles.length - 1 ? "pb-4 border-b border-gray-200" : ""}>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-xs text-muted-foreground">
+                  {article.source} · {formatDate(article.publishedAt)}
+                </span>
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[hsl(243,75%,59%)] hover:underline shrink-0 ml-2"
+                >
+                  Read →
+                </a>
+              </div>
+              <p className="text-sm font-medium text-foreground leading-snug mb-1">{article.title}</p>
+              {article.salesAngle && (
+                <p className="text-xs italic text-emerald-600 leading-relaxed">{article.salesAngle}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ValuePropCard({ vp }: { vp: ValueProp }) {
+  return (
+    <div className="bg-white border border-border rounded-xl p-5">
+      <h3 className="text-sm font-semibold text-foreground mb-1.5">{vp.session_title}</h3>
+      <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{vp.value_prop}</p>
+      <div className="flex flex-wrap gap-1.5 mb-1">
+        {vp.sponsor_tags.map((tag) => (
+          <span
+            key={tag}
+            className="px-2 py-0.5 text-xs font-medium rounded-full bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)]"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+      {vp.sponsor_tags[0] && <CompanyIntelligence sponsorTag={vp.sponsor_tags[0]} />}
+    </div>
+  );
+}
 
 export default function Prospects() {
   const { valueProps, eventName } = useSponso();
@@ -42,7 +163,7 @@ export default function Prospects() {
                       i + 1
                     )}
                   </div>
-                  <span className={`text-sm ${isActive ? "text-foreground font-medium" : isComplete ? "text-muted-foreground" : "text-muted-foreground"}`}>
+                  <span className={`text-sm ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {step}
                   </span>
                 </div>
@@ -72,22 +193,9 @@ export default function Prospects() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {valueProps.map((vp, i) => (
-              <div key={i} className="bg-white border border-border rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-1.5">{vp.session_title}</h3>
-                <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{vp.value_prop}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {vp.sponsor_tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 text-xs font-medium rounded-full bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)]"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <ValuePropCard key={i} vp={vp} />
             ))}
           </div>
         )}
