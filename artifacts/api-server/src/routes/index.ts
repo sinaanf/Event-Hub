@@ -5,6 +5,7 @@ import speakersRouter from "./speakers";
 import sessionsRouter from "./sessions";
 import attendeesRouter from "./attendees";
 import analyticsRouter from "./analytics";
+import valuePropsRouter from "./valueProps";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(speakersRouter);
 router.use(sessionsRouter);
 router.use(attendeesRouter);
 router.use(analyticsRouter);
+router.use(valuePropsRouter);
 
 export default router;

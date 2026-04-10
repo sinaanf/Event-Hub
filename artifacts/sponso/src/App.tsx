@@ -1,6 +1,7 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
+import { SponsoProvider } from "@/context/SponsoContext";
 import AgendaInput from "@/pages/AgendaInput";
 import Prospects from "@/pages/Prospects";
 import Campaigns from "@/pages/Campaigns";
@@ -36,9 +37,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
+      <SponsoProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+      </SponsoProvider>
     </QueryClientProvider>
   );
 }
