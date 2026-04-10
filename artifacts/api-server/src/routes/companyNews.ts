@@ -73,6 +73,7 @@ router.post("/company-news", async (req, res) => {
     return;
   }
 
+  console.log("[company-news] NEWS_API_KEY prefix:", newsApiKey.slice(0, 8));
   const simplifiedTag = simplifyTag(query);
   console.log("[company-news] Tag simplified:", JSON.stringify(query), "→", JSON.stringify(simplifiedTag));
   const searchQuery = [simplifiedTag, eventLocation].filter(Boolean).join(" ");
