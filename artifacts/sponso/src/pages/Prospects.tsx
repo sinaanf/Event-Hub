@@ -12,12 +12,35 @@ type NewsArticle = {
   salesAngle: string;
 };
 
+type Prospect = {
+  company_name: string;
+  reason: string;
+  contact_role: string;
+};
+
+type ProspectState = {
+  status: "idle" | "approved" | "skipped";
+  email: string;
+  emailLoading: boolean;
+  emailGenerated: boolean;
+  copied: boolean;
+};
+
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   } catch {
     return iso;
   }
+}
+
+function Spinner() {
+  return (
+    <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
 }
 
 function CompanyIntelligence({ sponsorTag, eventLocation }: { sponsorTag: string; eventLocation?: string }) {
@@ -59,10 +82,7 @@ function CompanyIntelligence({ sponsorTag, eventLocation }: { sponsorTag: string
 
       {loading && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-          <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <Spinner />
           Fetching latest news…
         </div>
       )}
@@ -104,7 +124,233 @@ function CompanyIntelligence({ sponsorTag, eventLocation }: { sponsorTag: string
   );
 }
 
-function ValuePropCard({ vp, eventLocation }: { vp: ValueProp; eventLocation?: string }) {
+function ProspectCard({
+  prospect,
+  session_title,
+  value_prop,
+  eventName,
+}: {
+  prospect: Prospect;
+  session_title: string;
+  value_prop: string;
+  eventName: string;
+}) {
+  const [state, setState] = useState<ProspectState>({
+    status: "idle",
+    email: "",
+    emailLoading: false,
+    emailGenerated: false,
+    copied: false,
+  });
+
+  function skip() {
+    setState((s) => ({ ...s, status: "skipped" }));
+  }
+
+  async function approve() {
+    setState((s) => ({ ...s, status: "approved", emailLoading: true }));
+
+    try {
+      const res = await fetch("/api/generate-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: prospect.company_name,
+          contact_role: prospect.contact_role,
+          reason: prospect.reason,
+          session_title,
+          value_prop,
+          eventName,
+        }),
+      });
+      const data = await res.json();
+      setState((s) => ({
+        ...s,
+        emailLoading: false,
+        emailGenerated: true,
+        email: data.email || "",
+      }));
+    } catch {
+      setState((s) => ({ ...s, emailLoading: false, emailGenerated: true, email: "" }));
+    }
+  }
+
+  function copyEmail() {
+    navigator.clipboard.writeText(state.email).then(() => {
+      setState((s) => ({ ...s, copied: true }));
+      setTimeout(() => setState((s) => ({ ...s, copied: false })), 2000);
+    });
+  }
+
+  if (state.status === "skipped") {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+        <span className="text-xs text-muted-foreground line-through">{prospect.company_name}</span>
+        <span className="text-xs text-muted-foreground">· skipped</span>
+        <button
+          onClick={() => setState((s) => ({ ...s, status: "idle" }))}
+          className="ml-auto text-xs text-[hsl(243,75%,59%)] hover:underline"
+        >
+          Undo
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{prospect.company_name}</p>
+          <p className="text-xs text-[hsl(243,75%,50%)] font-medium mt-0.5">{prospect.contact_role}</p>
+        </div>
+        {state.status === "idle" && (
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={skip}
+              className="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={approve}
+              className="text-xs px-3 py-1.5 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] transition-colors"
+            >
+              Approve
+            </button>
+          </div>
+        )}
+        {state.status === "approved" && (
+          <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium shrink-0">
+            Approved
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">{prospect.reason}</p>
+
+      {state.status === "approved" && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          {state.emailLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+              <Spinner />
+              Generating personalised email…
+            </div>
+          )}
+          {state.emailGenerated && (
+            <>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Cold outreach email
+              </p>
+              <textarea
+                value={state.email}
+                onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))}
+                rows={8}
+                className="w-full text-xs text-foreground leading-relaxed border border-gray-200 rounded-md px-3 py-2.5 resize-y focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1 font-mono"
+              />
+              <button
+                onClick={copyEmail}
+                className="mt-2 text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors"
+              >
+                {state.copied ? "Copied!" : "Copy email"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProspectSuggestions({
+  vp,
+  eventName,
+}: {
+  vp: ValueProp;
+  eventName: string;
+}) {
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fetched, setFetched] = useState(false);
+
+  async function findProspects() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/suggest-prospects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_title: vp.session_title,
+          value_prop: vp.value_prop,
+          sponsor_tags: vp.sponsor_tags,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setProspects(data.prospects || []);
+      setFetched(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to suggest prospects.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-lg bg-gray-50 border border-gray-100 px-4 pt-3 pb-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Prospect suggestions
+        </p>
+        {!fetched && (
+          <button
+            onClick={findProspects}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-60 transition-colors"
+          >
+            {loading && <Spinner />}
+            {loading ? "Finding prospects…" : "Find prospects"}
+          </button>
+        )}
+        {fetched && (
+          <button
+            onClick={() => { setFetched(false); setProspects([]); findProspects(); }}
+            disabled={loading}
+            className="text-xs text-[hsl(243,75%,59%)] hover:underline disabled:opacity-60"
+          >
+            Refresh
+          </button>
+        )}
+      </div>
+
+      {!fetched && !loading && (
+        <p className="text-xs text-muted-foreground">
+          Click to generate 3 AI-suggested prospect companies for this session.
+        </p>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      {fetched && prospects.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {prospects.map((p, i) => (
+            <ProspectCard
+              key={i}
+              prospect={p}
+              session_title={vp.session_title}
+              value_prop={vp.value_prop}
+              eventName={eventName}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ValuePropCard({ vp, eventLocation, eventName }: { vp: ValueProp; eventLocation?: string; eventName: string }) {
   return (
     <div className="bg-white border border-border rounded-xl p-5">
       <h3 className="text-sm font-semibold text-foreground mb-1.5">{vp.session_title}</h3>
@@ -122,6 +368,7 @@ function ValuePropCard({ vp, eventLocation }: { vp: ValueProp; eventLocation?: s
       {vp.sponsor_tags[0] && (
         <CompanyIntelligence sponsorTag={vp.sponsor_tags[0]} eventLocation={eventLocation} />
       )}
+      <ProspectSuggestions vp={vp} eventName={eventName} />
     </div>
   );
 }
@@ -197,7 +444,7 @@ export default function Prospects() {
         ) : (
           <div className="flex flex-col gap-4">
             {valueProps.map((vp, i) => (
-              <ValuePropCard key={i} vp={vp} eventLocation={eventLocation} />
+              <ValuePropCard key={i} vp={vp} eventLocation={eventLocation} eventName={eventName} />
             ))}
           </div>
         )}

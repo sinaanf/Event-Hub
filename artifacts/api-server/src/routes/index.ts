@@ -7,6 +7,8 @@ import attendeesRouter from "./attendees";
 import analyticsRouter from "./analytics";
 import valuePropsRouter from "./valueProps";
 import companyNewsRouter from "./companyNews";
+import suggestProspectsRouter from "./suggestProspects";
+import generateEmailRouter from "./generateEmail";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(attendeesRouter);
 router.use(analyticsRouter);
 router.use(valuePropsRouter);
 router.use(companyNewsRouter);
+router.use(suggestProspectsRouter);
+router.use(generateEmailRouter);
 
 export default router;
