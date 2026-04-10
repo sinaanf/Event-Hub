@@ -16,6 +16,8 @@ type Prospect = {
   company_name: string;
   reason: string;
   contact_role: string;
+  company_size?: string;
+  why_now?: string;
 };
 
 type ProspectState = {
@@ -228,6 +230,11 @@ function ProspectCard({
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">{prospect.reason}</p>
+      {prospect.why_now && (
+        <p className="text-xs text-amber-700 leading-relaxed mt-1.5">
+          <span className="font-medium">Why now:</span> {prospect.why_now}
+        </p>
+      )}
 
       {state.status === "approved" && (
         <div className="mt-3 pt-3 border-t border-gray-100">
@@ -265,9 +272,11 @@ function ProspectCard({
 function ProspectSuggestions({
   vp,
   eventName,
+  eventLocation,
 }: {
   vp: ValueProp;
   eventName: string;
+  eventLocation?: string;
 }) {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(false);
@@ -285,6 +294,8 @@ function ProspectSuggestions({
           session_title: vp.session_title,
           value_prop: vp.value_prop,
           sponsor_tags: vp.sponsor_tags,
+          eventName,
+          eventLocation,
         }),
       });
       const data = await res.json();
@@ -368,7 +379,7 @@ function ValuePropCard({ vp, eventLocation, eventName }: { vp: ValueProp; eventL
       {vp.sponsor_tags[0] && (
         <CompanyIntelligence sponsorTag={vp.sponsor_tags[0]} eventLocation={eventLocation} />
       )}
-      <ProspectSuggestions vp={vp} eventName={eventName} />
+      <ProspectSuggestions vp={vp} eventName={eventName} eventLocation={eventLocation} />
     </div>
   );
 }
