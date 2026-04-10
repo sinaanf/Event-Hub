@@ -83,15 +83,29 @@ router.post("/company-news", async (req, res) => {
     `&apiKey=${newsApiKey}`,
   ].join("");
 
+  const redactedUrl = newsUrl.replace(newsApiKey, "REDACTED");
+  console.log("[company-news] NewsAPI URL:", redactedUrl);
+
   try {
     const newsRes = await fetch(newsUrl);
+    console.log("[company-news] NewsAPI response status:", newsRes.status);
+
     const newsData = await newsRes.json() as {
       status: string;
       articles: RawArticle[];
     };
 
-    if (newsData.status !== "ok" || !newsData.articles?.length) {
-      res.json({ articles: [] });
+    const rawCount = newsData.articles?.length ?? 0;
+    console.log("[company-news] Articles returned:", rawCount, "| NewsAPI status:", newsData.status);
+
+    const debugInfo = {
+      query: searchQuery,
+      rawResultCount: rawCount,
+      domains: DOMAINS,
+    };
+
+    if (newsData.status !== "ok" || !rawCount) {
+      res.json({ articles: [], debug: debugInfo });
       return;
     }
 
@@ -114,9 +128,9 @@ router.post("/company-news", async (req, res) => {
       })
     );
 
-    res.json({ articles });
+    res.json({ articles, debug: debugInfo });
   } catch (err) {
-    console.error("Company news error:", err);
+    console.error("[company-news] Error:", err);
     res.status(500).json({ error: "Failed to fetch company news." });
   }
 });
