@@ -9,6 +9,15 @@ const EXCLUDE_DOMAINS = [
   "livemint.com", "moneycontrol.com", "businessstandard.com", "zeebiz.com",
 ].join(",");
 
+const STOP_WORDS = new Set([
+  "and", "the", "for", "&", "platforms", "solutions", "services",
+]);
+
+function simplifyTag(tag: string): string {
+  const words = tag.split(/\s+/).filter((w) => !STOP_WORDS.has(w.toLowerCase()));
+  return words.slice(0, 2).join(" ");
+}
+
 function fromDate90DaysAgo(): string {
   const d = new Date();
   d.setDate(d.getDate() - 90);
@@ -64,7 +73,9 @@ router.post("/company-news", async (req, res) => {
     return;
   }
 
-  const searchQuery = [query, eventLocation].filter(Boolean).join(" ");
+  const simplifiedTag = simplifyTag(query);
+  console.log("[company-news] Tag simplified:", JSON.stringify(query), "→", JSON.stringify(simplifiedTag));
+  const searchQuery = [simplifiedTag, eventLocation].filter(Boolean).join(" ");
   const from = fromDate90DaysAgo();
 
   const newsUrl = [
