@@ -25,7 +25,8 @@ router.post("/generate-value-props", async (req, res) => {
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+    let raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+    raw = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
     const valueProps = JSON.parse(raw);
 
     res.json({ valueProps });
