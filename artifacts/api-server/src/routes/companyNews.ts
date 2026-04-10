@@ -4,19 +4,14 @@ import Anthropic from "@anthropic-ai/sdk";
 const router: IRouter = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const DOMAINS = [
-  "ft.com", "reuters.com", "bloomberg.com", "businessinsider.com",
-  "techcrunch.com", "forbes.com", "wired.com", "theguardian.com",
-  "cityam.com", "fnlondon.com",
-  "esgtoday.com", "greenbiz.com", "responsible-investor.com", "sustainablebrands.com",
-  "businessgreen.com", "edie.net", "climatechangenews.com", "carbonbrief.org",
-  "environmentalleader.com", "sustainability.com", "eenews.net", "cleanenergywire.org",
-  "spglobal.com", "msci.com",
+const EXCLUDE_DOMAINS = [
+  "indiatimes.com", "economictimes.com", "hindustantimes.com", "ndtv.com",
+  "livemint.com", "moneycontrol.com", "businessstandard.com", "zeebiz.com",
 ].join(",");
 
-function fromDate30DaysAgo(): string {
+function fromDate90DaysAgo(): string {
   const d = new Date();
-  d.setDate(d.getDate() - 30);
+  d.setDate(d.getDate() - 90);
   return d.toISOString().split("T")[0];
 }
 
@@ -70,7 +65,7 @@ router.post("/company-news", async (req, res) => {
   }
 
   const searchQuery = [query, eventLocation].filter(Boolean).join(" ");
-  const from = fromDate30DaysAgo();
+  const from = fromDate90DaysAgo();
 
   const newsUrl = [
     "https://newsapi.org/v2/everything",
@@ -78,7 +73,7 @@ router.post("/company-news", async (req, res) => {
     `&sortBy=publishedAt`,
     `&pageSize=3`,
     `&language=en`,
-    `&domains=${DOMAINS}`,
+    `&excludeDomains=${EXCLUDE_DOMAINS}`,
     `&from=${from}`,
     `&apiKey=${newsApiKey}`,
   ].join("");
@@ -101,7 +96,7 @@ router.post("/company-news", async (req, res) => {
     const debugInfo = {
       query: searchQuery,
       rawResultCount: rawCount,
-      domains: DOMAINS,
+      excludeDomains: EXCLUDE_DOMAINS,
     };
 
     if (newsData.status !== "ok" || !rawCount) {
