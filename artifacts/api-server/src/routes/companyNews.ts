@@ -103,6 +103,11 @@ router.post("/company-news", async (req, res) => {
     };
 
     const rawCount = newsData.articles?.length ?? 0;
+    console.log("[company-news] Raw NewsAPI response:", JSON.stringify({
+      status: newsData.status,
+      totalResults: (newsData as any).totalResults,
+      firstArticle: newsData.articles?.[0] ?? null,
+    }, null, 2));
     console.log("[company-news] Articles returned:", rawCount, "| NewsAPI status:", newsData.status);
 
     const debugInfo = {
