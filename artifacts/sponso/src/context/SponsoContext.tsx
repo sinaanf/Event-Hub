@@ -8,9 +8,11 @@ export type ValueProp = {
 
 type SponsoState = {
   eventName: string;
+  eventLocation: string;
   agenda: string;
   valueProps: ValueProp[];
   setEventName: (name: string) => void;
+  setEventLocation: (location: string) => void;
   setAgenda: (agenda: string) => void;
   setValueProps: (props: ValueProp[]) => void;
 };
@@ -19,11 +21,12 @@ const SponsoContext = createContext<SponsoState | null>(null);
 
 export function SponsoProvider({ children }: { children: ReactNode }) {
   const [eventName, setEventName] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
   const [agenda, setAgenda] = useState("");
   const [valueProps, setValueProps] = useState<ValueProp[]>([]);
 
   return (
-    <SponsoContext.Provider value={{ eventName, agenda, valueProps, setEventName, setAgenda, setValueProps }}>
+    <SponsoContext.Provider value={{ eventName, eventLocation, agenda, valueProps, setEventName, setEventLocation, setAgenda, setValueProps }}>
       {children}
     </SponsoContext.Provider>
   );

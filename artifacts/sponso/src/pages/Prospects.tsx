@@ -20,7 +20,7 @@ function formatDate(iso: string) {
   }
 }
 
-function CompanyIntelligence({ sponsorTag }: { sponsorTag: string }) {
+function CompanyIntelligence({ sponsorTag, eventLocation }: { sponsorTag: string; eventLocation?: string }) {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +33,7 @@ function CompanyIntelligence({ sponsorTag }: { sponsorTag: string }) {
     fetch("/api/company-news", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: sponsorTag }),
+      body: JSON.stringify({ query: sponsorTag, eventLocation }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -104,7 +104,7 @@ function CompanyIntelligence({ sponsorTag }: { sponsorTag: string }) {
   );
 }
 
-function ValuePropCard({ vp }: { vp: ValueProp }) {
+function ValuePropCard({ vp, eventLocation }: { vp: ValueProp; eventLocation?: string }) {
   return (
     <div className="bg-white border border-border rounded-xl p-5">
       <h3 className="text-sm font-semibold text-foreground mb-1.5">{vp.session_title}</h3>
@@ -119,13 +119,15 @@ function ValuePropCard({ vp }: { vp: ValueProp }) {
           </span>
         ))}
       </div>
-      {vp.sponsor_tags[0] && <CompanyIntelligence sponsorTag={vp.sponsor_tags[0]} />}
+      {vp.sponsor_tags[0] && (
+        <CompanyIntelligence sponsorTag={vp.sponsor_tags[0]} eventLocation={eventLocation} />
+      )}
     </div>
   );
 }
 
 export default function Prospects() {
-  const { valueProps, eventName } = useSponso();
+  const { valueProps, eventName, eventLocation } = useSponso();
   const [, navigate] = useLocation();
 
   return (
@@ -195,7 +197,7 @@ export default function Prospects() {
         ) : (
           <div className="flex flex-col gap-4">
             {valueProps.map((vp, i) => (
-              <ValuePropCard key={i} vp={vp} />
+              <ValuePropCard key={i} vp={vp} eventLocation={eventLocation} />
             ))}
           </div>
         )}

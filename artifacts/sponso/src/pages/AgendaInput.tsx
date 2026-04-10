@@ -5,7 +5,7 @@ import { useSponso } from "@/context/SponsoContext";
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
 
 export default function AgendaInput() {
-  const { eventName, agenda, setEventName, setAgenda, setValueProps } = useSponso();
+  const { eventName, eventLocation, agenda, setEventName, setEventLocation, setAgenda, setValueProps } = useSponso();
   const [, navigate] = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export default function AgendaInput() {
       const res = await fetch(`/api/generate-value-props`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventName, agenda }),
+        body: JSON.stringify({ eventName, eventLocation, agenda }),
       });
 
       const data = await res.json();
@@ -87,6 +87,20 @@ export default function AgendaInput() {
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
               placeholder="e.g. FinTech Connect Europe 2025"
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:border-transparent transition"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground" htmlFor="event-location">
+              Event location
+            </label>
+            <input
+              id="event-location"
+              type="text"
+              value={eventLocation}
+              onChange={(e) => setEventLocation(e.target.value)}
+              placeholder="e.g. London, UK"
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:border-transparent transition"
             />
           </div>

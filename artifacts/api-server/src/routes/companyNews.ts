@@ -4,6 +4,26 @@ import Anthropic from "@anthropic-ai/sdk";
 const router: IRouter = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const DOMAINS = [
+  "ft.com", "reuters.com", "bloomberg.com", "businessinsider.com",
+  "techcrunch.com", "forbes.com", "wired.com", "theguardian.com",
+  "cityam.com", "fnlondon.com",
+].join(",");
+
+function fromDate30DaysAgo(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d.toISOString().split("T")[0];
+}
+
+type RawArticle = {
+  title: string;
+  description: string | null;
+  source: { name: string };
+  publishedAt: string;
+  url: string;
+};
+
 type Article = {
   title: string;
   source: string;
@@ -12,14 +32,19 @@ type Article = {
   salesAngle: string;
 };
 
-async function getSalesAngle(article: { title: string; description: string | null }, sponsorTag: string): Promise<string> {
+async function getSalesAngle(
+  article: { title: string; description: string | null },
+  sponsorTag: string,
+  eventLocation?: string
+): Promise<string> {
+  const locationContext = eventLocation ? ` targeting the ${eventLocation} market` : "";
   const message = await client.messages.create({
     model: "claude-opus-4-5",
     max_tokens: 150,
     messages: [
       {
         role: "user",
-        content: `You are a sponsorship sales strategist. In one sentence (max 25 words), explain why this news is relevant for a sponsorship salesperson pitching to companies in the "${sponsorTag}" category.\n\nNews: "${article.title}${article.description ? ". " + article.description : ""}"`,
+        content: `You are a sponsorship sales strategist. In one sentence (max 25 words), explain why this news is relevant for a sponsorship salesperson pitching to companies in the "${sponsorTag}" category${locationContext}.\n\nNews: "${article.title}${article.description ? ". " + article.description : ""}"`,
       },
     ],
   });
@@ -27,7 +52,7 @@ async function getSalesAngle(article: { title: string; description: string | nul
 }
 
 router.post("/company-news", async (req, res) => {
-  const { query } = req.body as { query?: string };
+  const { query, eventLocation } = req.body as { query?: string; eventLocation?: string };
 
   if (!query?.trim()) {
     res.status(400).json({ error: "Query is required" });
@@ -40,12 +65,25 @@ router.post("/company-news", async (req, res) => {
     return;
   }
 
+  const searchQuery = [query, eventLocation].filter(Boolean).join(" ");
+  const from = fromDate30DaysAgo();
+
+  const newsUrl = [
+    "https://newsapi.org/v2/everything",
+    `?q=${encodeURIComponent(searchQuery)}`,
+    `&sortBy=publishedAt`,
+    `&pageSize=3`,
+    `&language=en`,
+    `&domains=${DOMAINS}`,
+    `&from=${from}`,
+    `&apiKey=${newsApiKey}`,
+  ].join("");
+
   try {
-    const newsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=3&language=en&apiKey=${newsApiKey}`;
     const newsRes = await fetch(newsUrl);
     const newsData = await newsRes.json() as {
       status: string;
-      articles: Array<{ title: string; description: string | null; source: { name: string }; publishedAt: string; url: string }>;
+      articles: RawArticle[];
     };
 
     if (newsData.status !== "ok" || !newsData.articles?.length) {
@@ -57,7 +95,11 @@ router.post("/company-news", async (req, res) => {
 
     const articles: Article[] = await Promise.all(
       top3.map(async (a) => {
-        const salesAngle = await getSalesAngle({ title: a.title, description: a.description }, query);
+        const salesAngle = await getSalesAngle(
+          { title: a.title, description: a.description },
+          query,
+          eventLocation
+        );
         return {
           title: a.title,
           source: a.source.name,
