@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSponso, type ValueProp } from "@/context/SponsoContext";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
 
@@ -383,12 +383,13 @@ function ValuePropCard({ vp, eventLocation, eventName }: { vp: ValueProp; eventL
       <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{vp.value_prop}</p>
       <div className="flex flex-wrap gap-1.5 mb-1">
         {vp.sponsor_tags.map((tag) => (
-          <span
+          <Link
             key={tag}
-            className="px-2 py-0.5 text-xs font-medium rounded-full bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)]"
+            href={`/category?tag=${encodeURIComponent(tag)}`}
+            className="px-2 py-0.5 text-xs font-medium rounded-full bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] hover:bg-[hsl(243,75%,92%)] transition-colors cursor-pointer"
           >
             {tag}
-          </span>
+          </Link>
         ))}
       </div>
       {vp.sponsor_tags[0] && (

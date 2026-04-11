@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { SponsoProvider } from "@/context/SponsoContext";
 import AgendaInput from "@/pages/AgendaInput";
 import Prospects from "@/pages/Prospects";
+import CategoryIntelligence from "@/pages/CategoryIntelligence";
 import Campaigns from "@/pages/Campaigns";
 import Dashboard from "@/pages/Dashboard";
 
@@ -25,6 +26,7 @@ function Router() {
         <Switch>
           <Route path="/" component={AgendaInput} />
           <Route path="/prospects" component={Prospects} />
+          <Route path="/category" component={CategoryIntelligence} />
           <Route path="/campaigns" component={Campaigns} />
           <Route path="/dashboard" component={Dashboard} />
           <Route component={NotFound} />
