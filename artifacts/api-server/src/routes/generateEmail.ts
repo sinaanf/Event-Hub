@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 const router: IRouter = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are an expert B2B sponsorship sales writer. Write a personalised cold outreach email under 150 words. The email should be direct, specific, and compelling — referencing the company's fit with the conference session. No filler phrases like 'I hope this finds you well'. Use a friendly professional tone. Return only the email body text, no subject line, no markdown.`;
+const SYSTEM_PROMPT = `You are an expert B2B sponsorship sales writer. Write a personalised cold outreach email under 150 words and a subject line. The email should be direct, specific, and compelling — referencing the company's fit with the conference session. No filler phrases like I hope this finds you well. Use a friendly professional tone. Return a JSON object with two fields: subject (the email subject line, max 10 words, specific and compelling, no clickbait) and body (the email body text only, no markdown).`;
 
 router.post("/generate-email", async (req, res) => {
   const { company_name, contact_role, reason, session_title, value_prop, eventName } = req.body as {
@@ -38,8 +38,10 @@ router.post("/generate-email", async (req, res) => {
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const email = message.content[0].type === "text" ? message.content[0].text.trim() : "";
-    res.json({ email });
+    let raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+    raw = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
+    const parsed = JSON.parse(raw);
+    res.json({ subject: parsed.subject || "", email: parsed.body || "" });
   } catch (err) {
     console.error("[generate-email] Error:", err);
     res.status(500).json({ error: "Failed to generate email. Please try again." });

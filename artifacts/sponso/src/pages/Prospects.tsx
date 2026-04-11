@@ -23,6 +23,7 @@ type Prospect = {
 
 type ProspectState = {
   status: "idle" | "approved" | "skipped";
+  emailSubject: string;
   email: string;
   emailLoading: boolean;
   emailGenerated: boolean;
@@ -140,6 +141,7 @@ function ProspectCard({
 }) {
   const [state, setState] = useState<ProspectState>({
     status: "idle",
+    emailSubject: "",
     email: "",
     emailLoading: false,
     emailGenerated: false,
@@ -171,15 +173,19 @@ function ProspectCard({
         ...s,
         emailLoading: false,
         emailGenerated: true,
+        emailSubject: data.subject || "",
         email: data.email || "",
       }));
     } catch {
-      setState((s) => ({ ...s, emailLoading: false, emailGenerated: true, email: "" }));
+      setState((s) => ({ ...s, emailLoading: false, emailGenerated: true, emailSubject: "", email: "" }));
     }
   }
 
   function copyEmail() {
-    navigator.clipboard.writeText(state.email).then(() => {
+    const text = state.emailSubject
+      ? `Subject: ${state.emailSubject}\n\n${state.email}`
+      : state.email;
+    navigator.clipboard.writeText(text).then(() => {
       setState((s) => ({ ...s, copied: true }));
       setTimeout(() => setState((s) => ({ ...s, copied: false })), 2000);
     });
@@ -255,6 +261,17 @@ function ProspectCard({
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                 Cold outreach email
               </p>
+              {state.emailSubject && (
+                <div className="mb-2">
+                  <label className="text-xs text-muted-foreground mb-1 block">Subject</label>
+                  <input
+                    type="text"
+                    value={state.emailSubject}
+                    readOnly
+                    className="w-full text-xs text-foreground border border-gray-200 rounded-md px-3 py-2 bg-gray-50 focus:outline-none font-medium"
+                  />
+                </div>
+              )}
               <textarea
                 value={state.email}
                 onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))}
