@@ -280,12 +280,18 @@ function ProspectSuggestions({
 }) {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetched, setFetched] = useState(false);
 
-  async function findProspects() {
-    setLoading(true);
+  async function fetchProspects(append: boolean) {
+    const isMore = append && prospects.length > 0;
+    if (isMore) setLoadingMore(true);
+    else setLoading(true);
     setError(null);
+
+    const exclusions = append ? prospects.map((p) => p.company_name) : [];
+
     try {
       const res = await fetch("/api/suggest-prospects", {
         method: "POST",
@@ -296,16 +302,19 @@ function ProspectSuggestions({
           sponsor_tags: vp.sponsor_tags,
           eventName,
           eventLocation,
+          exclusions,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setProspects(data.prospects || []);
+      const newProspects: Prospect[] = data.prospects || [];
+      setProspects((prev) => (append ? [...prev, ...newProspects] : newProspects));
       setFetched(true);
     } catch (err: any) {
       setError(err.message || "Failed to suggest prospects.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
@@ -317,21 +326,12 @@ function ProspectSuggestions({
         </p>
         {!fetched && (
           <button
-            onClick={findProspects}
+            onClick={() => fetchProspects(false)}
             disabled={loading}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-60 transition-colors"
           >
             {loading && <Spinner />}
             {loading ? "Finding prospects…" : "Find prospects"}
-          </button>
-        )}
-        {fetched && (
-          <button
-            onClick={() => { setFetched(false); setProspects([]); findProspects(); }}
-            disabled={loading}
-            className="text-xs text-[hsl(243,75%,59%)] hover:underline disabled:opacity-60"
-          >
-            Refresh
           </button>
         )}
       </div>
@@ -348,13 +348,22 @@ function ProspectSuggestions({
         <div className="flex flex-col gap-3">
           {prospects.map((p, i) => (
             <ProspectCard
-              key={i}
+              key={`${p.company_name}-${i}`}
               prospect={p}
               session_title={vp.session_title}
               value_prop={vp.value_prop}
               eventName={eventName}
             />
           ))}
+
+          <button
+            onClick={() => fetchProspects(true)}
+            disabled={loadingMore}
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-md border border-gray-200 text-muted-foreground hover:bg-white disabled:opacity-60 transition-colors mt-1"
+          >
+            {loadingMore && <Spinner />}
+            {loadingMore ? "Finding more…" : "Show 3 more"}
+          </button>
         </div>
       )}
     </div>
