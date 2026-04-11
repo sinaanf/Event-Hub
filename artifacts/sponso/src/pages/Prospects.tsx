@@ -18,6 +18,7 @@ type Prospect = {
   contact_role: string;
   company_size?: string;
   why_now?: string;
+  sponsorship_angle?: string;
 };
 
 type ProspectState = {
@@ -233,6 +234,11 @@ function ProspectCard({
       {prospect.why_now && (
         <p className="text-xs text-amber-700 leading-relaxed mt-1.5">
           <span className="font-medium">Why now:</span> {prospect.why_now}
+        </p>
+      )}
+      {prospect.sponsorship_angle && (
+        <p className="text-xs italic text-gray-400 leading-relaxed mt-1.5">
+          {prospect.sponsorship_angle}
         </p>
       )}
 
