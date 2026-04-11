@@ -2,6 +2,14 @@ import { useEffect, useState } from "react";
 import { useSponso, type ValueProp } from "@/context/SponsoContext";
 import { useLocation, Link } from "wouter";
 
+function getSenderName(): string {
+  try {
+    const raw = localStorage.getItem("sinoo_profile");
+    if (raw) return JSON.parse(raw).fullName || "";
+  } catch {}
+  return "";
+}
+
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
 
 type NewsArticle = {
@@ -166,6 +174,7 @@ function ProspectCard({
           session_title,
           value_prop,
           eventName,
+          sender_name: getSenderName(),
         }),
       });
       const data = await res.json();

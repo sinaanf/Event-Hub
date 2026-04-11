@@ -4,6 +4,7 @@ import {
   Users,
   Send,
   LayoutDashboard,
+  Settings,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -51,8 +52,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-5 py-4 border-t border-border">
-        <p className="text-xs text-muted-foreground">v0.1 · shell</p>
+      <div className="px-3 pb-3 border-t border-border pt-3">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+            location.startsWith("/settings")
+              ? "bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] font-medium"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          }`}
+        >
+          <Settings size={16} className={location.startsWith("/settings") ? "text-[hsl(243,75%,55%)]" : ""} />
+          Settings
+        </Link>
       </div>
     </aside>
   );

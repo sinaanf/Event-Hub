@@ -7,6 +7,7 @@ import Prospects from "@/pages/Prospects";
 import CategoryIntelligence from "@/pages/CategoryIntelligence";
 import Campaigns from "@/pages/Campaigns";
 import Dashboard from "@/pages/Dashboard";
+import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ function Router() {
           <Route path="/category" component={CategoryIntelligence} />
           <Route path="/campaigns" component={Campaigns} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>
       </main>
