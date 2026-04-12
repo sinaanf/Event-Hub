@@ -51,22 +51,26 @@ router.post("/find-contact", async (req, res) => {
     }
     console.log("[find-contact] Resolved org ID:", orgId);
 
-    // Step 2: fetch top people using the org ID
-    const peopleParams = new URLSearchParams();
-    peopleParams.append("organization_id", orgId);
-    const peopleUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?${peopleParams.toString()}`;
+    // Step 2: search contacts by org ID
+    const contactsUrl = "https://api.apollo.io/api/v1/contacts/search";
+    const contactsBody = { organization_ids: [orgId], per_page: 10 };
 
-    console.log("[find-contact] Top people URL:", peopleUrl);
-    const peopleRes = await fetch(peopleUrl, {
-      method: "GET",
-      headers: { "X-Api-Key": apolloApiKey },
+    console.log("[find-contact] Contacts search URL:", contactsUrl);
+    console.log("[find-contact] Contacts search body:", JSON.stringify(contactsBody));
+    const peopleRes = await fetch(contactsUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": apolloApiKey,
+      },
+      body: JSON.stringify(contactsBody),
     });
     const rawBody = await peopleRes.text();
-    console.log("[find-contact] Top people response status:", peopleRes.status);
-    console.log("[find-contact] Top people raw response:", rawBody);
+    console.log("[find-contact] Contacts search response status:", peopleRes.status);
+    console.log("[find-contact] Contacts search raw response:", rawBody);
 
     const data = JSON.parse(rawBody) as {
-      people?: Array<{
+      contacts?: Array<{
         name?: string;
         title?: string;
         linkedin_url?: string;
@@ -74,14 +78,14 @@ router.post("/find-contact", async (req, res) => {
       }>;
     };
 
-    console.log("[find-contact] People returned:", data.people?.length ?? 0);
+    console.log("[find-contact] Contacts returned:", data.contacts?.length ?? 0);
 
-    if (!data.people?.length) {
+    if (!data.contacts?.length) {
       res.json({ status: "not_found" });
       return;
     }
 
-    const filtered = data.people
+    const filtered = data.contacts
       .filter((p) => {
         const t = (p.title || "").toLowerCase();
         return TITLE_KEYWORDS.some((kw) => t.includes(kw));
