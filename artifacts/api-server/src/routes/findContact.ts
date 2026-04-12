@@ -2,12 +2,6 @@ import { Router, type IRouter } from "express";
 
 const router: IRouter = Router();
 
-const CONTACT_TITLES = [
-  "sponsorship", "partnerships", "brand partnerships",
-  "marketing director", "VP marketing", "CMO",
-  "head of marketing", "head of brand",
-];
-
 router.post("/find-contact", async (req, res) => {
   const { company_name, company_domain } = req.body as {
     company_name?: string;
@@ -25,18 +19,17 @@ router.post("/find-contact", async (req, res) => {
     return;
   }
 
+  const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications"];
+
   const requestBody = {
-    "person_titles[]": CONTACT_TITLES,
     "q_organization_domains_list[]": [company_domain],
-    "person_seniorities[]": ["c_suite", "vp", "head", "director"],
-    per_page: 3,
   };
 
   console.log("[find-contact] Company domain:", company_domain);
   console.log("[find-contact] Apollo request body:", JSON.stringify(requestBody, null, 2));
 
   try {
-    const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/search", {
+    const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/organization_top_people", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -65,14 +58,25 @@ router.post("/find-contact", async (req, res) => {
       return;
     }
 
-    const contacts = data.people.slice(0, 3).map((p) => ({
-      full_name: p.name || "",
-      title: p.title || "",
-      linkedin_url: p.linkedin_url || "",
-      company: p.organization?.name || company_name,
-    }));
+    const filtered = data.people
+      .filter((p) => {
+        const t = (p.title || "").toLowerCase();
+        return TITLE_KEYWORDS.some((kw) => t.includes(kw));
+      })
+      .slice(0, 3)
+      .map((p) => ({
+        full_name: p.name || "",
+        title: p.title || "",
+        linkedin_url: p.linkedin_url || "",
+        company: p.organization?.name || company_name,
+      }));
 
-    res.json({ status: "found", contacts });
+    if (!filtered.length) {
+      res.json({ status: "not_found" });
+      return;
+    }
+
+    res.json({ status: "found", contacts: filtered });
   } catch (err) {
     console.error("[find-contact] Error:", err);
     res.status(500).json({ error: "Failed to search for contact." });
