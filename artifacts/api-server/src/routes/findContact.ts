@@ -5,9 +5,10 @@ const router: IRouter = Router();
 const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications", "events", "director", "head", "vp", "vice president", "chief", "manager"];
 
 router.post("/find-contact", async (req, res) => {
-  const { company_name, company_domain } = req.body as {
+  const { company_name, company_domain, location } = req.body as {
     company_name?: string;
     company_domain?: string;
+    location?: string;
   };
 
   if (!company_name || !company_domain) {
@@ -26,6 +27,9 @@ router.post("/find-contact", async (req, res) => {
   params.append("api_key", hunterApiKey);
   params.append("limit", "10");
   params.append("seniority", "executive");
+  if (location) {
+    params.append("location", location);
+  }
   const hunterUrl = `https://api.hunter.io/v2/domain-search?${params.toString()}`;
 
   console.log("[find-contact] Hunter URL:", hunterUrl);

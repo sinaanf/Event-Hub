@@ -155,11 +155,13 @@ function ProspectCard({
   session_title,
   value_prop,
   eventName,
+  eventLocation,
 }: {
   prospect: Prospect;
   session_title: string;
   value_prop: string;
   eventName: string;
+  eventLocation?: string;
 }) {
   const [state, setState] = useState<ProspectState>({
     status: "idle",
@@ -216,11 +218,24 @@ function ProspectCard({
     });
   }
 
+  function resolveCountry(loc?: string): string | undefined {
+    if (!loc) return undefined;
+    const part = loc.includes(",") ? loc.split(",").pop()!.trim() : loc.trim();
+    const map: Record<string, string> = {
+      "UK": "United Kingdom",
+      "US": "United States",
+      "USA": "United States",
+      "UAE": "United Arab Emirates",
+    };
+    return map[part.toUpperCase()] ?? part;
+  }
+
   async function findContact() {
     setState((s) => ({ ...s, contactLoading: true, contact: null }));
     const domain = prospect.company_name
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "") + ".com";
+    const country = resolveCountry(eventLocation);
     try {
       const res = await fetch("/api/find-contact", {
         method: "POST",
@@ -228,6 +243,7 @@ function ProspectCard({
         body: JSON.stringify({
           company_name: prospect.company_name,
           company_domain: domain,
+          ...(country ? { location: country } : {}),
         }),
       });
       const data = await res.json();
@@ -478,6 +494,7 @@ function ProspectSuggestions({
               session_title={vp.session_title}
               value_prop={vp.value_prop}
               eventName={eventName}
+              eventLocation={eventLocation}
             />
           ))}
 
