@@ -21,25 +21,49 @@ router.post("/find-contact", async (req, res) => {
 
   const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications"];
 
-  const params = new URLSearchParams();
-  params.append("q_organization_domains_list[]", company_domain);
-  params.append("per_page", "10");
-  const apolloUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?${params.toString()}`;
-
-  console.log("[find-contact] Company domain:", company_domain);
-  console.log("[find-contact] Apollo URL:", apolloUrl);
+  console.log("[find-contact] Step 1 — looking up org ID for:", company_name);
 
   try {
-    const apolloRes = await fetch(apolloUrl, {
-      method: "GET",
-      headers: {
-        "X-Api-Key": apolloApiKey,
-      },
-    });
+    // Step 1: resolve organisation ID by name
+    const orgParams = new URLSearchParams();
+    orgParams.append("q_organization_name", company_name);
+    orgParams.append("per_page", "1");
+    const orgUrl = `https://api.apollo.io/api/v1/organizations/search?${orgParams.toString()}`;
 
-    const rawBody = await apolloRes.text();
-    console.log("[find-contact] Apollo response status:", apolloRes.status);
-    console.log("[find-contact] Apollo raw response body:", rawBody);
+    console.log("[find-contact] Org search URL:", orgUrl);
+    const orgRes = await fetch(orgUrl, {
+      method: "GET",
+      headers: { "X-Api-Key": apolloApiKey },
+    });
+    const orgRawBody = await orgRes.text();
+    console.log("[find-contact] Org search response status:", orgRes.status);
+    console.log("[find-contact] Org search raw response:", orgRawBody);
+
+    const orgData = JSON.parse(orgRawBody) as {
+      organizations?: Array<{ id?: string; name?: string }>;
+    };
+
+    const orgId = orgData.organizations?.[0]?.id;
+    if (!orgId) {
+      console.log("[find-contact] No org ID found — returning not_found");
+      res.json({ status: "not_found" });
+      return;
+    }
+    console.log("[find-contact] Resolved org ID:", orgId);
+
+    // Step 2: fetch top people using the org ID
+    const peopleParams = new URLSearchParams();
+    peopleParams.append("organization_id", orgId);
+    const peopleUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?${peopleParams.toString()}`;
+
+    console.log("[find-contact] Top people URL:", peopleUrl);
+    const peopleRes = await fetch(peopleUrl, {
+      method: "GET",
+      headers: { "X-Api-Key": apolloApiKey },
+    });
+    const rawBody = await peopleRes.text();
+    console.log("[find-contact] Top people response status:", peopleRes.status);
+    console.log("[find-contact] Top people raw response:", rawBody);
 
     const data = JSON.parse(rawBody) as {
       people?: Array<{
