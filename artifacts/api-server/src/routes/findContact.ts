@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 
 const router: IRouter = Router();
 
-const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications", "events"];
+const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications", "events", "director", "head", "vp", "vice president", "chief", "manager"];
 
 router.post("/find-contact", async (req, res) => {
   const { company_name, company_domain } = req.body as {
@@ -24,7 +24,9 @@ router.post("/find-contact", async (req, res) => {
   const params = new URLSearchParams();
   params.append("domain", company_domain);
   params.append("api_key", hunterApiKey);
-  params.append("limit", "10");
+  params.append("limit", "25");
+  params.append("department", "management");
+  params.append("seniority", "executive");
   const hunterUrl = `https://api.hunter.io/v2/domain-search?${params.toString()}`;
 
   console.log("[find-contact] Hunter URL:", hunterUrl);
@@ -55,7 +57,14 @@ router.post("/find-contact", async (req, res) => {
     }
 
     const emails = data.data?.emails ?? [];
-    console.log("[find-contact] Emails returned:", emails.length);
+    console.log("[find-contact] Emails returned before filtering:", emails.length);
+
+    const toContact = (e: { first_name?: string; last_name?: string; position?: string; value?: string; linkedin?: string }) => ({
+      full_name: [e.first_name, e.last_name].filter(Boolean).join(" "),
+      title: e.position || "",
+      email: e.value || "",
+      linkedin_url: e.linkedin || "",
+    });
 
     const filtered = emails
       .filter((e) => {
@@ -63,21 +72,25 @@ router.post("/find-contact", async (req, res) => {
         return TITLE_KEYWORDS.some((kw) => pos.includes(kw));
       })
       .slice(0, 3)
-      .map((e) => ({
-        full_name: [e.first_name, e.last_name].filter(Boolean).join(" "),
-        title: e.position || "",
-        email: e.value || "",
-        linkedin_url: e.linkedin || "",
-      }));
+      .map(toContact);
 
     console.log("[find-contact] Filtered matches:", filtered.length);
 
-    if (!filtered.length) {
+    if (filtered.length > 0) {
+      res.json({ status: "found", contacts: filtered });
+      return;
+    }
+
+    // Fallback: return top 3 regardless of title
+    console.log("[find-contact] No keyword matches — falling back to top 3 results");
+    const fallback = emails.slice(0, 3).map(toContact);
+
+    if (!fallback.length) {
       res.json({ status: "not_found" });
       return;
     }
 
-    res.json({ status: "found", contacts: filtered });
+    res.json({ status: "found", contacts: fallback });
   } catch (err) {
     console.error("[find-contact] Error:", err);
     res.status(500).json({ error: "Failed to search for contact." });
