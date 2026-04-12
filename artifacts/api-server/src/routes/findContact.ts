@@ -21,21 +21,17 @@ router.post("/find-contact", async (req, res) => {
 
   const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications"];
 
-  const requestBody = {
-    "q_organization_domains_list[]": [company_domain],
-  };
+  const apolloUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?q_organization_domains_list[]=${encodeURIComponent(company_domain)}`;
 
   console.log("[find-contact] Company domain:", company_domain);
-  console.log("[find-contact] Apollo request body:", JSON.stringify(requestBody, null, 2));
+  console.log("[find-contact] Apollo URL:", apolloUrl);
 
   try {
-    const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/organization_top_people", {
-      method: "POST",
+    const apolloRes = await fetch(apolloUrl, {
+      method: "GET",
       headers: {
-        "Content-Type": "application/json",
         "X-Api-Key": apolloApiKey,
       },
-      body: JSON.stringify(requestBody),
     });
 
     const rawBody = await apolloRes.text();
