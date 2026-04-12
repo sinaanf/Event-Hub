@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useSponso } from "@/context/SponsoContext";
 
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
+const STEP_ROUTES = ["/", "/prospects", "/prospects", "/campaigns"];
 
 export default function AgendaInput() {
   const { eventName, eventLocation, agenda, setEventName, setEventLocation, setAgenda, setValueProps } = useSponso();
@@ -55,20 +56,23 @@ export default function AgendaInput() {
             const isActive = i === 0;
             return (
               <div key={step} className="flex items-center">
-                <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(STEP_ROUTES[i])}
+                  className="flex items-center gap-2 group"
+                >
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
                       isActive
                         ? "bg-[hsl(243,75%,59%)] text-white"
-                        : "bg-secondary text-muted-foreground"
-                    }`}
+                        : "bg-secondary text-muted-foreground group-hover:bg-[hsl(243,75%,85%)] group-hover:text-[hsl(243,75%,40%)]"
+                    } transition-colors`}
                   >
                     {i + 1}
                   </div>
-                  <span className={`text-sm ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                  <span className={`text-sm transition-colors ${isActive ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"}`}>
                     {step}
                   </span>
-                </div>
+                </button>
                 {i < STEPS.length - 1 && <div className="w-10 h-px bg-border mx-3" />}
               </div>
             );
