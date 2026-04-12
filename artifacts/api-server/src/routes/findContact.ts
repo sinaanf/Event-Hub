@@ -36,7 +36,7 @@ router.post("/find-contact", async (req, res) => {
   console.log("[find-contact] Apollo request body:", JSON.stringify(requestBody, null, 2));
 
   try {
-    const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/api_search", {
+    const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
