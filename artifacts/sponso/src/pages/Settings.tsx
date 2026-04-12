@@ -1,88 +1,175 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-const STORAGE_KEY = "sinoo_profile";
+const PERSONAL_KEY = "sinoo_profile";
+const COMPANY_KEY = "sinooprofile";
 
-type Profile = {
+const SECTOR_OPTIONS = ["Sustainability", "Finance", "Supply Chain", "Healthcare", "Legal", "Insurance", "AI"];
+
+type PersonalProfile = {
   fullName: string;
   jobTitle: string;
   company: string;
 };
 
-function loadProfile(): Profile {
+type CompanyProfile = {
+  orgName: string;
+  eventSector: string;
+  icp: string;
+  packages: string;
+};
+
+function loadPersonal(): PersonalProfile {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(PERSONAL_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
   return { fullName: "", jobTitle: "", company: "" };
 }
 
-export function saveProfile(profile: Profile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+function loadCompany(): CompanyProfile {
+  try {
+    const raw = localStorage.getItem(COMPANY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { orgName: "", eventSector: "", icp: "", packages: "" };
 }
 
 export function loadSenderName(): string {
-  return loadProfile().fullName;
+  return loadPersonal().fullName;
+}
+
+export function loadCompanyProfile(): CompanyProfile {
+  return loadCompany();
 }
 
 export default function Settings() {
-  const [profile, setProfile] = useState<Profile>(loadProfile);
+  const [personal, setPersonal] = useState<PersonalProfile>(loadPersonal);
+  const [company, setCompany] = useState<CompanyProfile>(loadCompany);
   const [saved, setSaved] = useState(false);
 
-  function handleChange(field: keyof Profile, value: string) {
-    setProfile((p) => ({ ...p, [field]: value }));
+  function handlePersonal(field: keyof PersonalProfile, value: string) {
+    setPersonal((p) => ({ ...p, [field]: value }));
+    setSaved(false);
+  }
+
+  function handleCompany(field: keyof CompanyProfile, value: string) {
+    setCompany((p) => ({ ...p, [field]: value }));
     setSaved(false);
   }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    saveProfile(profile);
+    localStorage.setItem(PERSONAL_KEY, JSON.stringify(personal));
+    localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
 
+  const inputClass = "text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1 w-full";
+  const textareaClass = `${inputClass} resize-y font-mono leading-relaxed`;
+
   return (
     <div className="flex-1 p-8">
-      <div className="max-w-lg">
+      <div className="max-w-xl">
         <h1 className="text-xl font-semibold text-foreground mb-1">Settings</h1>
         <p className="text-sm text-muted-foreground mb-8">
-          Your profile details are used to personalise outreach emails.
+          Your profile and company details personalise prospect suggestions and outreach emails.
         </p>
 
-        <form onSubmit={handleSave} className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Full name</label>
-            <input
-              type="text"
-              value={profile.fullName}
-              onChange={(e) => handleChange("fullName", e.target.value)}
-              placeholder="e.g. Alex Johnson"
-              className="text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1"
-            />
+        <form onSubmit={handleSave} className="flex flex-col gap-6">
+          {/* Personal details */}
+          <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your details</p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Full name</label>
+              <input
+                type="text"
+                value={personal.fullName}
+                onChange={(e) => handlePersonal("fullName", e.target.value)}
+                placeholder="e.g. Alex Johnson"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Job title</label>
+              <input
+                type="text"
+                value={personal.jobTitle}
+                onChange={(e) => handlePersonal("jobTitle", e.target.value)}
+                placeholder="e.g. Head of Sponsorship"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Company</label>
+              <input
+                type="text"
+                value={personal.company}
+                onChange={(e) => handlePersonal("company", e.target.value)}
+                placeholder="e.g. Acme Events"
+                className={inputClass}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Job title</label>
-            <input
-              type="text"
-              value={profile.jobTitle}
-              onChange={(e) => handleChange("jobTitle", e.target.value)}
-              placeholder="e.g. Head of Sponsorship"
-              className="text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1"
-            />
+          {/* Company / event profile */}
+          <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company profile</p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Organisation name</label>
+              <input
+                type="text"
+                value={company.orgName}
+                onChange={(e) => handleCompany("orgName", e.target.value)}
+                placeholder="e.g. Global Finance Events Ltd"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Event sector</label>
+              <select
+                value={company.eventSector}
+                onChange={(e) => handleCompany("eventSector", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Select a sector…</option>
+                {SECTOR_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Ideal Customer Profile (ICP)</label>
+              <p className="text-xs text-muted-foreground">Describe who attends your events. Claude uses this to target the right sponsors.</p>
+              <textarea
+                value={company.icp}
+                onChange={(e) => handleCompany("icp", e.target.value)}
+                placeholder="e.g. Chief Sustainability Officers at FTSE250 companies, VP of ESG at Fortune 500, Head of Corporate Affairs at global banks..."
+                rows={5}
+                className={textareaClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Sponsorship packages</label>
+              <p className="text-xs text-muted-foreground">List your packages so Claude can reference specific offerings in outreach emails.</p>
+              <textarea
+                value={company.packages}
+                onChange={(e) => handleCompany("packages", e.target.value)}
+                placeholder={"e.g. Keynote sponsorship — £25,000\nRoundtable facilitation — £10,000\nBranded lunch — £15,000"}
+                rows={5}
+                className={textareaClass}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Company</label>
-            <input
-              type="text"
-              value={profile.company}
-              onChange={(e) => handleChange("company", e.target.value)}
-              placeholder="e.g. Acme Events"
-              className="text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-3">
             <button
               type="submit"
               className="text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] transition-colors"

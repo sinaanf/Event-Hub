@@ -10,6 +10,14 @@ function getSenderName(): string {
   return "";
 }
 
+function getCompanyProfile(): { orgName: string; eventSector: string; icp: string; packages: string } {
+  try {
+    const raw = localStorage.getItem("sinooprofile");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { orgName: "", eventSector: "", icp: "", packages: "" };
+}
+
 const STEPS = ["Agenda", "Value Props", "Prospects", "Outreach"];
 const STEP_ROUTES = ["/", "/prospects", "/prospects", "/campaigns"];
 
@@ -244,6 +252,13 @@ function ProspectCard({
           value_prop,
           eventName,
           sender_name: getSenderName(),
+          ...(() => {
+            const cp = getCompanyProfile();
+            return {
+              org_name: cp.orgName || undefined,
+              packages: cp.packages || undefined,
+            };
+          })(),
         }),
       });
       const data = await res.json();
@@ -474,6 +489,15 @@ function ProspectSuggestions({
           eventName,
           eventLocation,
           exclusions,
+          ...(() => {
+            const cp = getCompanyProfile();
+            return {
+              org_name: cp.orgName || undefined,
+              event_sector: cp.eventSector || undefined,
+              icp: cp.icp || undefined,
+              packages: cp.packages || undefined,
+            };
+          })(),
         }),
       });
       const data = await res.json();
