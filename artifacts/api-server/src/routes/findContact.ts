@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 
 const router: IRouter = Router();
 
+const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications", "events"];
+
 router.post("/find-contact", async (req, res) => {
   const { company_name, company_domain } = req.body as {
     company_name?: string;
@@ -13,90 +15,62 @@ router.post("/find-contact", async (req, res) => {
     return;
   }
 
-  const apolloApiKey = process.env.APOLLO_API_KEY;
-  if (!apolloApiKey) {
-    res.status(500).json({ error: "APOLLO_API_KEY is not configured" });
+  const hunterApiKey = process.env.HUNTER_API_KEY;
+  if (!hunterApiKey) {
+    res.status(500).json({ error: "HUNTER_API_KEY is not configured" });
     return;
   }
 
-  const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications"];
+  const params = new URLSearchParams();
+  params.append("domain", company_domain);
+  params.append("api_key", hunterApiKey);
+  params.append("limit", "10");
+  const hunterUrl = `https://api.hunter.io/v2/domain-search?${params.toString()}`;
 
-  console.log("[find-contact] Step 1 — looking up org ID for:", company_name);
+  console.log("[find-contact] Hunter URL:", hunterUrl);
 
   try {
-    // Step 1: resolve organisation ID by name
-    const orgParams = new URLSearchParams();
-    orgParams.append("q_organization_name", company_name);
-    orgParams.append("per_page", "1");
-    const orgUrl = `https://api.apollo.io/api/v1/organizations/search?${orgParams.toString()}`;
-
-    console.log("[find-contact] Org search URL:", orgUrl);
-    const orgRes = await fetch(orgUrl, {
-      method: "GET",
-      headers: { "X-Api-Key": apolloApiKey },
-    });
-    const orgRawBody = await orgRes.text();
-    console.log("[find-contact] Org search response status:", orgRes.status);
-    console.log("[find-contact] Org search raw response:", orgRawBody);
-
-    const orgData = JSON.parse(orgRawBody) as {
-      organizations?: Array<{ id?: string; name?: string }>;
-    };
-
-    const orgId = orgData.organizations?.[0]?.id;
-    if (!orgId) {
-      console.log("[find-contact] No org ID found — returning not_found");
-      res.json({ status: "not_found" });
-      return;
-    }
-    console.log("[find-contact] Resolved org ID:", orgId);
-
-    // Step 2: search contacts by org ID
-    const contactsUrl = "https://api.apollo.io/api/v1/contacts/search";
-    const contactsBody = { organization_ids: [orgId], per_page: 10 };
-
-    console.log("[find-contact] Contacts search URL:", contactsUrl);
-    console.log("[find-contact] Contacts search body:", JSON.stringify(contactsBody));
-    const peopleRes = await fetch(contactsUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": apolloApiKey,
-      },
-      body: JSON.stringify(contactsBody),
-    });
-    const rawBody = await peopleRes.text();
-    console.log("[find-contact] Contacts search response status:", peopleRes.status);
-    console.log("[find-contact] Contacts search raw response:", rawBody);
+    const hunterRes = await fetch(hunterUrl, { method: "GET" });
+    const rawBody = await hunterRes.text();
+    console.log("[find-contact] Hunter response status:", hunterRes.status);
+    console.log("[find-contact] Hunter raw response:", rawBody);
 
     const data = JSON.parse(rawBody) as {
-      contacts?: Array<{
-        name?: string;
-        title?: string;
-        linkedin_url?: string;
-        organization?: { name?: string };
-      }>;
+      data?: {
+        emails?: Array<{
+          first_name?: string;
+          last_name?: string;
+          position?: string;
+          value?: string;
+          linkedin?: string;
+        }>;
+      };
+      errors?: Array<{ details: string }>;
     };
 
-    console.log("[find-contact] Contacts returned:", data.contacts?.length ?? 0);
-
-    if (!data.contacts?.length) {
+    if (data.errors?.length) {
+      console.log("[find-contact] Hunter returned errors:", data.errors);
       res.json({ status: "not_found" });
       return;
     }
 
-    const filtered = data.contacts
-      .filter((p) => {
-        const t = (p.title || "").toLowerCase();
-        return TITLE_KEYWORDS.some((kw) => t.includes(kw));
+    const emails = data.data?.emails ?? [];
+    console.log("[find-contact] Emails returned:", emails.length);
+
+    const filtered = emails
+      .filter((e) => {
+        const pos = (e.position || "").toLowerCase();
+        return TITLE_KEYWORDS.some((kw) => pos.includes(kw));
       })
       .slice(0, 3)
-      .map((p) => ({
-        full_name: p.name || "",
-        title: p.title || "",
-        linkedin_url: p.linkedin_url || "",
-        company: p.organization?.name || company_name,
+      .map((e) => ({
+        full_name: [e.first_name, e.last_name].filter(Boolean).join(" "),
+        title: e.position || "",
+        email: e.value || "",
+        linkedin_url: e.linkedin || "",
       }));
+
+    console.log("[find-contact] Filtered matches:", filtered.length);
 
     if (!filtered.length) {
       res.json({ status: "not_found" });
