@@ -29,12 +29,16 @@ type Prospect = {
   sponsorship_angle?: string;
 };
 
+type ContactPerson = {
+  full_name: string;
+  title: string;
+  linkedin_url: string;
+  company: string;
+};
+
 type ContactResult = {
   status: "found" | "not_found";
-  full_name?: string;
-  title?: string;
-  linkedin_url?: string;
-  company?: string;
+  contacts?: ContactPerson[];
 };
 
 type ProspectState = {
@@ -224,7 +228,6 @@ function ProspectCard({
         body: JSON.stringify({
           company_name: prospect.company_name,
           company_domain: domain,
-          contact_role: prospect.contact_role,
         }),
       });
       const data = await res.json();
@@ -346,32 +349,39 @@ function ProspectCard({
 
               {state.contact && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                  {state.contact.status === "not_found" ? (
+                  {state.contact.status === "not_found" || !state.contact.contacts?.length ? (
                     <p className="text-xs text-muted-foreground italic">
                       No contact found — try searching manually.
                     </p>
                   ) : (
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">{state.contact.full_name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{state.contact.title}</p>
-                        {state.contact.company && (
-                          <p className="text-xs text-muted-foreground">{state.contact.company}</p>
-                        )}
-                      </div>
-                      {state.contact.linkedin_url && (
-                        <a
-                          href={state.contact.linkedin_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[#0077B5] text-white hover:bg-[#006097] transition-colors shrink-0"
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Contacts found
+                      </p>
+                      {state.contact.contacts.map((c, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:border-[hsl(243,75%,80%)] hover:bg-[hsl(243,75%,98%)] transition-colors"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                          </svg>
-                          LinkedIn
-                        </a>
-                      )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground truncate">{c.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{c.title}</p>
+                          </div>
+                          {c.linkedin_url && (
+                            <a
+                              href={c.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[#0077B5] text-white hover:bg-[#006097] transition-colors shrink-0"
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                              </svg>
+                              LinkedIn
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

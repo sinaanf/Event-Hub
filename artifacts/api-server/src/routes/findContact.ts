@@ -2,15 +2,20 @@ import { Router, type IRouter } from "express";
 
 const router: IRouter = Router();
 
+const CONTACT_TITLES = [
+  "sponsorship", "partnerships", "brand partnerships",
+  "marketing director", "VP marketing", "CMO",
+  "head of marketing", "head of brand",
+];
+
 router.post("/find-contact", async (req, res) => {
-  const { company_name, company_domain, contact_role } = req.body as {
+  const { company_name, company_domain } = req.body as {
     company_name?: string;
     company_domain?: string;
-    contact_role?: string;
   };
 
-  if (!company_name || !company_domain || !contact_role) {
-    res.status(400).json({ error: "company_name, company_domain, and contact_role are required" });
+  if (!company_name || !company_domain) {
+    res.status(400).json({ error: "company_name and company_domain are required" });
     return;
   }
 
@@ -28,7 +33,7 @@ router.post("/find-contact", async (req, res) => {
         "X-Api-Key": apolloApiKey,
       },
       body: JSON.stringify({
-        "person_titles[]": [contact_role],
+        "person_titles[]": CONTACT_TITLES,
         "q_organization_domains_list[]": [company_domain],
         "person_seniorities[]": ["c_suite", "vp", "head", "director"],
         per_page: 3,
@@ -51,14 +56,14 @@ router.post("/find-contact", async (req, res) => {
       return;
     }
 
-    const top = data.people[0];
-    res.json({
-      status: "found",
-      full_name: top.name || "",
-      title: top.title || "",
-      linkedin_url: top.linkedin_url || "",
-      company: top.organization?.name || company_name,
-    });
+    const contacts = data.people.slice(0, 3).map((p) => ({
+      full_name: p.name || "",
+      title: p.title || "",
+      linkedin_url: p.linkedin_url || "",
+      company: p.organization?.name || company_name,
+    }));
+
+    res.json({ status: "found", contacts });
   } catch (err) {
     console.error("[find-contact] Error:", err);
     res.status(500).json({ error: "Failed to search for contact." });
