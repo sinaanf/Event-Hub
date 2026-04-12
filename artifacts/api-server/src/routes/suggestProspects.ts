@@ -21,6 +21,13 @@ router.post("/suggest-prospects", async (req, res) => {
     return;
   }
 
+  const NON_COMMERCIAL_KEYWORDS = ["break", "lunch", "networking", "registration", "coffee", "drinks"];
+  const titleLower = session_title.toLowerCase();
+  if (NON_COMMERCIAL_KEYWORDS.some((kw) => titleLower.includes(kw))) {
+    res.json({ prospects: [], message: "No prospects for this session type" });
+    return;
+  }
+
   const userMessage = [
     eventName ? `Event: ${eventName}` : "",
     eventLocation ? `Event location: ${eventLocation}` : "",
@@ -42,7 +49,15 @@ router.post("/suggest-prospects", async (req, res) => {
 
     let raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
     raw = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
-    const prospects = JSON.parse(raw);
+
+    let prospects;
+    try {
+      prospects = JSON.parse(raw);
+    } catch (parseErr) {
+      console.error("[suggest-prospects] JSON parse failed. Raw response:", raw);
+      res.status(500).json({ error: "Failed to parse prospect suggestions. Please try again." });
+      return;
+    }
 
     res.json({ prospects });
   } catch (err) {
