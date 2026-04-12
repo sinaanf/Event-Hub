@@ -10,6 +10,7 @@ import companyNewsRouter from "./companyNews";
 import suggestProspectsRouter from "./suggestProspects";
 import generateEmailRouter from "./generateEmail";
 import categoryIntelligenceRouter from "./categoryIntelligence";
+import findContactRouter from "./findContact";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(companyNewsRouter);
 router.use(suggestProspectsRouter);
 router.use(generateEmailRouter);
 router.use(categoryIntelligenceRouter);
+router.use(findContactRouter);
 
 export default router;

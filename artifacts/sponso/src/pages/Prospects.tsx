@@ -29,6 +29,14 @@ type Prospect = {
   sponsorship_angle?: string;
 };
 
+type ContactResult = {
+  status: "found" | "not_found";
+  full_name?: string;
+  title?: string;
+  linkedin_url?: string;
+  company?: string;
+};
+
 type ProspectState = {
   status: "idle" | "approved" | "skipped";
   emailSubject: string;
@@ -36,6 +44,8 @@ type ProspectState = {
   emailLoading: boolean;
   emailGenerated: boolean;
   copied: boolean;
+  contactLoading: boolean;
+  contact: ContactResult | null;
 };
 
 function formatDate(iso: string) {
@@ -154,6 +164,8 @@ function ProspectCard({
     emailLoading: false,
     emailGenerated: false,
     copied: false,
+    contactLoading: false,
+    contact: null,
   });
 
   function skip() {
@@ -198,6 +210,32 @@ function ProspectCard({
       setState((s) => ({ ...s, copied: true }));
       setTimeout(() => setState((s) => ({ ...s, copied: false })), 2000);
     });
+  }
+
+  async function findContact() {
+    setState((s) => ({ ...s, contactLoading: true, contact: null }));
+    const domain = prospect.company_name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "") + ".com";
+    try {
+      const res = await fetch("/api/find-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: prospect.company_name,
+          company_domain: domain,
+          contact_role: prospect.contact_role,
+        }),
+      });
+      const data = await res.json();
+      setState((s) => ({ ...s, contactLoading: false, contact: data }));
+    } catch {
+      setState((s) => ({
+        ...s,
+        contactLoading: false,
+        contact: { status: "not_found" },
+      }));
+    }
   }
 
   if (state.status === "skipped") {
@@ -287,12 +325,57 @@ function ProspectCard({
                 rows={8}
                 className="w-full text-xs text-foreground leading-relaxed border border-gray-200 rounded-md px-3 py-2.5 resize-y focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1 font-mono"
               />
-              <button
-                onClick={copyEmail}
-                className="mt-2 text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors"
-              >
-                {state.copied ? "Copied!" : "Copy email"}
-              </button>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  onClick={copyEmail}
+                  className="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors"
+                >
+                  {state.copied ? "Copied!" : "Copy email"}
+                </button>
+                {!state.contact && (
+                  <button
+                    onClick={findContact}
+                    disabled={state.contactLoading}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-[hsl(243,75%,80%)] text-[hsl(243,75%,50%)] hover:bg-[hsl(243,75%,97%)] disabled:opacity-60 transition-colors"
+                  >
+                    {state.contactLoading && <Spinner />}
+                    {state.contactLoading ? "Searching…" : "Find contact"}
+                  </button>
+                )}
+              </div>
+
+              {state.contact && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  {state.contact.status === "not_found" ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      No contact found — try searching manually.
+                    </p>
+                  ) : (
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{state.contact.full_name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{state.contact.title}</p>
+                        {state.contact.company && (
+                          <p className="text-xs text-muted-foreground">{state.contact.company}</p>
+                        )}
+                      </div>
+                      {state.contact.linkedin_url && (
+                        <a
+                          href={state.contact.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[#0077B5] text-white hover:bg-[#006097] transition-colors shrink-0"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                          </svg>
+                          LinkedIn
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
