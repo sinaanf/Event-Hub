@@ -25,6 +25,16 @@ router.post("/find-contact", async (req, res) => {
     return;
   }
 
+  const requestBody = {
+    "person_titles[]": CONTACT_TITLES,
+    "q_organization_domains_list[]": [company_domain],
+    "person_seniorities[]": ["c_suite", "vp", "head", "director"],
+    per_page: 3,
+  };
+
+  console.log("[find-contact] Company domain:", company_domain);
+  console.log("[find-contact] Apollo request body:", JSON.stringify(requestBody, null, 2));
+
   try {
     const apolloRes = await fetch("https://api.apollo.io/api/v1/mixed_people/api_search", {
       method: "POST",
@@ -32,15 +42,14 @@ router.post("/find-contact", async (req, res) => {
         "Content-Type": "application/json",
         "X-Api-Key": apolloApiKey,
       },
-      body: JSON.stringify({
-        "person_titles[]": CONTACT_TITLES,
-        "q_organization_domains_list[]": [company_domain],
-        "person_seniorities[]": ["c_suite", "vp", "head", "director"],
-        per_page: 3,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
-    const data = await apolloRes.json() as {
+    const rawBody = await apolloRes.text();
+    console.log("[find-contact] Apollo response status:", apolloRes.status);
+    console.log("[find-contact] Apollo raw response body:", rawBody);
+
+    const data = JSON.parse(rawBody) as {
       people?: Array<{
         name?: string;
         title?: string;
@@ -49,7 +58,7 @@ router.post("/find-contact", async (req, res) => {
       }>;
     };
 
-    console.log("[find-contact] Apollo status:", apolloRes.status, "| Results:", data.people?.length ?? 0);
+    console.log("[find-contact] People returned:", data.people?.length ?? 0);
 
     if (!data.people?.length) {
       res.json({ status: "not_found" });
