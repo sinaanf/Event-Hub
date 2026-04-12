@@ -32,6 +32,7 @@ type Prospect = {
 type ContactPerson = {
   full_name: string;
   title: string;
+  email: string;
   linkedin_url: string;
   company: string;
 };
@@ -145,6 +146,55 @@ function CompanyIntelligence({ sponsorTag, eventLocation }: { sponsorTag: string
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+function ContactCard({ contact }: { contact: ContactPerson }) {
+  const [copied, setCopied] = useState(false);
+
+  function copyEmail() {
+    navigator.clipboard.writeText(contact.email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-3 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:border-[hsl(243,75%,80%)] hover:bg-[hsl(243,75%,98%)] transition-colors">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-foreground truncate">{contact.full_name}</p>
+        <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
+        {contact.email && (
+          <div className="flex items-center gap-2 mt-1">
+            <a
+              href={`mailto:${contact.email}`}
+              className="text-xs text-[hsl(243,75%,50%)] hover:underline truncate"
+            >
+              {contact.email}
+            </a>
+            <button
+              onClick={copyEmail}
+              className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 text-muted-foreground hover:bg-white hover:border-[hsl(243,75%,70%)] hover:text-[hsl(243,75%,50%)] transition-colors"
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        )}
+      </div>
+      {contact.linkedin_url && (
+        <a
+          href={contact.linkedin_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[#0077B5] text-white hover:bg-[#006097] transition-colors shrink-0"
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+          </svg>
+          LinkedIn
+        </a>
       )}
     </div>
   );
@@ -375,28 +425,7 @@ function ProspectCard({
                         Contacts found
                       </p>
                       {state.contact.contacts.map((c, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:border-[hsl(243,75%,80%)] hover:bg-[hsl(243,75%,98%)] transition-colors"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-foreground truncate">{c.full_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{c.title}</p>
-                          </div>
-                          {c.linkedin_url && (
-                            <a
-                              href={c.linkedin_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[#0077B5] text-white hover:bg-[#006097] transition-colors shrink-0"
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                              </svg>
-                              LinkedIn
-                            </a>
-                          )}
-                        </div>
+                        <ContactCard key={i} contact={c} />
                       ))}
                     </div>
                   )}
