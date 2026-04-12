@@ -21,7 +21,10 @@ router.post("/find-contact", async (req, res) => {
 
   const TITLE_KEYWORDS = ["sponsor", "partner", "marketing", "brand", "commercial", "cmo", "communications"];
 
-  const apolloUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?q_organization_domains_list[]=${encodeURIComponent(company_domain)}`;
+  const params = new URLSearchParams();
+  params.append("q_organization_domains_list[]", company_domain);
+  params.append("per_page", "10");
+  const apolloUrl = `https://api.apollo.io/api/v1/mixed_people/organization_top_people?${params.toString()}`;
 
   console.log("[find-contact] Company domain:", company_domain);
   console.log("[find-contact] Apollo URL:", apolloUrl);
