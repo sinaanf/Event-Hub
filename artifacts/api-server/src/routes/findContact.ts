@@ -25,7 +25,6 @@ router.post("/find-contact", async (req, res) => {
   params.append("domain", company_domain);
   params.append("api_key", hunterApiKey);
   params.append("limit", "10");
-  params.append("department", "management");
   params.append("seniority", "executive");
   const hunterUrl = `https://api.hunter.io/v2/domain-search?${params.toString()}`;
 
