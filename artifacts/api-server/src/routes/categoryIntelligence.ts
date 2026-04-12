@@ -16,7 +16,7 @@ router.post("/category-intelligence", async (req, res) => {
 
   try {
     const message = await client.messages.create({
-      model: "claude-opus-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: `Sponsor category: ${category}` }],

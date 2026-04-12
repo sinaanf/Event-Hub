@@ -47,7 +47,7 @@ async function getSalesAngle(
 ): Promise<string> {
   const locationContext = eventLocation ? ` targeting the ${eventLocation} market` : "";
   const message = await client.messages.create({
-    model: "claude-opus-4-5",
+    model: "claude-sonnet-4-6",
     max_tokens: 150,
     messages: [
       {
