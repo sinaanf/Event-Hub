@@ -48,16 +48,11 @@ async function generateSessionAI(
     eventSector = event?.event_sector ?? null;
   }
 
-  const prompt = [
-    "B2B conference session details:",
+  const userMessage = [
     eventSector ? `Event sector: ${eventSector}` : "",
     sessionTitle ? `Session title: ${sessionTitle}` : "",
     format ? `Format: ${format}` : "",
-    sessionBrief ? `Session brief:\n${sessionBrief}` : "",
-    "\nWrite two things:",
-    "audience: Exactly 2 sentences describing who is in the room — specific job titles, seniority level, what they are actively deciding right now.",
-    "sponsor_fit: Exactly 2 sentences on which sponsor categories belong in this session and the specific commercial reason why.",
-    '\nReturn JSON only: {"audience": "...", "sponsor_fit": "..."}',
+    sessionBrief ? `Session brief: ${sessionBrief}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -65,15 +60,17 @@ async function generateSessionAI(
   try {
     const msg = await anthropicClient.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 350,
-      messages: [{ role: "user", content: prompt }],
+      max_tokens: 200,
+      system:
+        'You are a sponsorship sales strategist. Given a session title, format, brief and event sector, return a JSON object with two fields: in_the_room (1-2 sentences on the specific audience profile for this session — their job titles and what they are deciding) and why_sponsor (1-2 sentences on the commercial reason a company would sponsor this session). Be concise — no more than 30 words per field. No markdown. Return JSON only.',
+      messages: [{ role: "user", content: userMessage }],
     });
 
     let raw = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
     raw = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
     const parsed = JSON.parse(raw);
-    const audience = parsed.audience || null;
-    const sponsor_fit = parsed.sponsor_fit || null;
+    const audience = parsed.in_the_room || null;
+    const sponsor_fit = parsed.why_sponsor || null;
 
     await supabase
       .from("sessions")

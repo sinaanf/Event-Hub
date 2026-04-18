@@ -497,51 +497,49 @@ export default function LiveAgenda() {
                             </div>
                           )}
 
-                          {/* AI-generated content */}
+                          {/* AI summary blocks */}
                           {(session.audience || session.sponsor_fit) && (
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                            <div className="flex gap-3">
                               {session.audience && (
-                                <div>
+                                <div className="flex-1 bg-gray-50 rounded-lg px-4 py-3">
                                   <div className="flex items-center gap-1.5 mb-1.5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Audience
-                                    </p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">In the room</p>
                                     <AiBadge />
-                                    <button
-                                      onClick={() => handleRegenerate(session.id)}
-                                      disabled={regeneratingId === session.id}
-                                      title="Regenerate AI content"
-                                      className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 ml-0.5"
-                                    >
-                                      {regeneratingId === session.id
-                                        ? <Loader2 size={11} className="animate-spin" />
-                                        : <RefreshCw size={11} />}
-                                    </button>
-                                  </div>
-                                  <p className="text-sm text-foreground leading-relaxed">{session.audience}</p>
-                                </div>
-                              )}
-                              {session.sponsor_fit && (
-                                <div>
-                                  <div className="flex items-center gap-1.5 mb-1.5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Sponsor fit
-                                    </p>
-                                    <AiBadge />
-                                    {!session.audience && (
+                                    {isOrganiser && (
                                       <button
                                         onClick={() => handleRegenerate(session.id)}
                                         disabled={regeneratingId === session.id}
-                                        title="Regenerate AI content"
-                                        className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 ml-0.5"
+                                        title="Regenerate"
+                                        className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
                                       >
                                         {regeneratingId === session.id
-                                          ? <Loader2 size={11} className="animate-spin" />
-                                          : <RefreshCw size={11} />}
+                                          ? <Loader2 size={10} className="animate-spin" />
+                                          : <RefreshCw size={10} />}
                                       </button>
                                     )}
                                   </div>
-                                  <p className="text-sm text-foreground leading-relaxed">{session.sponsor_fit}</p>
+                                  <p className="text-xs text-foreground leading-relaxed">{session.audience}</p>
+                                </div>
+                              )}
+                              {session.sponsor_fit && (
+                                <div className="flex-1 bg-gray-50 rounded-lg px-4 py-3">
+                                  <div className="flex items-center gap-1.5 mb-1.5">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Why sponsor</p>
+                                    <AiBadge />
+                                    {isOrganiser && !session.audience && (
+                                      <button
+                                        onClick={() => handleRegenerate(session.id)}
+                                        disabled={regeneratingId === session.id}
+                                        title="Regenerate"
+                                        className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                                      >
+                                        {regeneratingId === session.id
+                                          ? <Loader2 size={10} className="animate-spin" />
+                                          : <RefreshCw size={10} />}
+                                      </button>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-foreground leading-relaxed">{session.sponsor_fit}</p>
                                 </div>
                               )}
                             </div>
@@ -549,18 +547,24 @@ export default function LiveAgenda() {
 
                           {/* Speakers */}
                           {session.speakers && session.speakers.length > 0 && (
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                                Speakers
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {session.speakers.map((sp, i) => (
-                                  <div key={i} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
+                            <div className="flex flex-wrap gap-2">
+                              {session.speakers.map((sp, i) => {
+                                const initials = sp.name
+                                  .split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase();
+                                return (
+                                  <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-gray-200 bg-white text-xs">
+                                    <span className="w-5 h-5 rounded-full bg-[hsl(243,75%,92%)] text-[hsl(243,75%,50%)] flex items-center justify-center text-[9px] font-bold shrink-0">
+                                      {initials}
+                                    </span>
                                     <span className="font-medium text-foreground">{sp.name}</span>
-                                    {sp.company && <span className="text-muted-foreground"> · {sp.company}</span>}
+                                    {sp.company && <span className="text-muted-foreground">· {sp.company}</span>}
                                   </div>
-                                ))}
-                              </div>
+                                );
+                              })}
                             </div>
                           )}
 
