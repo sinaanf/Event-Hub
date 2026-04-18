@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { SponsoProvider } from "@/context/SponsoContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ProfileProvider, useProfile } from "@/context/ProfileContext";
 import AgendaInput from "@/pages/AgendaInput";
 import Prospects from "@/pages/Prospects";
 import CategoryIntelligence from "@/pages/CategoryIntelligence";
 import Campaigns from "@/pages/Campaigns";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
+import LiveAgenda from "@/pages/LiveAgenda";
 import Login from "@/pages/Login";
 
 const queryClient = new QueryClient();
@@ -38,13 +40,28 @@ function RedirectIfAuthed({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function HomeRoute() {
+  const { effectiveRole, loading } = useProfile();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!loading && effectiveRole === "salesperson") {
+      navigate("/live-agenda");
+    }
+  }, [loading, effectiveRole]);
+
+  if (loading || effectiveRole === "salesperson") return null;
+  return <AgendaInput />;
+}
+
 function AppShell() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 min-w-0">
         <Switch>
-          <Route path="/" component={AgendaInput} />
+          <Route path="/" component={HomeRoute} />
+          <Route path="/live-agenda" component={LiveAgenda} />
           <Route path="/prospects" component={Prospects} />
           <Route path="/category" component={CategoryIntelligence} />
           <Route path="/campaigns" component={Campaigns} />
@@ -71,7 +88,9 @@ function Router() {
       </Route>
       <Route>
         <RequireAuth>
-          <AppShell />
+          <ProfileProvider>
+            <AppShell />
+          </ProfileProvider>
         </RequireAuth>
       </Route>
     </Switch>

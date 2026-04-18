@@ -6,8 +6,8 @@ const router = Router();
 
 router.use(requireAuth);
 
-async function getUserRole(userId: string): Promise<string | null> {
-  if (!supabase) return null;
+async function getUserRole(userId: string): Promise<string> {
+  if (!supabase) return "salesperson";
   const { data } = await supabase
     .from("sinoo_profile")
     .select("user_role")
@@ -17,7 +17,9 @@ async function getUserRole(userId: string): Promise<string | null> {
   return data?.user_role ?? "salesperson";
 }
 
-function requireOrganiser(handler: (req: AuthRequest, res: any) => Promise<any>) {
+function requireOrganiser(
+  handler: (req: AuthRequest, res: any) => Promise<any>,
+) {
   return async (req: AuthRequest, res: any) => {
     const role = await getUserRole(req.userId!);
     if (role !== "organiser") {
@@ -52,18 +54,20 @@ router.post(
       audience,
       sponsor_fit,
       status,
+      speakers,
     } = req.body;
     const { data, error } = await supabase
       .from("sessions")
       .insert([
         {
-          event_name,
-          event_date,
-          session_title,
-          format,
-          audience,
-          sponsor_fit,
+          event_name: event_name ?? null,
+          event_date: event_date ?? null,
+          session_title: session_title ?? null,
+          format: format ?? null,
+          audience: audience ?? null,
+          sponsor_fit: sponsor_fit ?? null,
           status: status ?? "available",
+          speakers: speakers ?? [],
           created_by: req.userId,
         },
       ])
@@ -90,8 +94,11 @@ router.patch(
       audience,
       sponsor_fit,
       status,
+      speakers,
     } = req.body;
-    const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const payload: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
     if (event_name !== undefined) payload.event_name = event_name;
     if (event_date !== undefined) payload.event_date = event_date;
     if (session_title !== undefined) payload.session_title = session_title;
@@ -99,6 +106,7 @@ router.patch(
     if (audience !== undefined) payload.audience = audience;
     if (sponsor_fit !== undefined) payload.sponsor_fit = sponsor_fit;
     if (status !== undefined) payload.status = status;
+    if (speakers !== undefined) payload.speakers = speakers;
     const { data, error } = await supabase
       .from("sessions")
       .update(payload)
@@ -131,10 +139,20 @@ router.patch("/:id/prospect", async (req: AuthRequest, res) => {
   if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
   const { id } = req.params;
   const { prospect_company, prospect_contact, prospect_stage } = req.body;
-  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
   if (prospect_company !== undefined) payload.prospect_company = prospect_company;
   if (prospect_contact !== undefined) payload.prospect_contact = prospect_contact;
   if (prospect_stage !== undefined) payload.prospect_stage = prospect_stage;
+
+  if (prospect_stage === "Closed Won") {
+    payload.status = "sold";
+  } else if (prospect_company) {
+    payload.status = "proposal out";
+  }
+
   const { data, error } = await supabase
     .from("sessions")
     .update(payload)
