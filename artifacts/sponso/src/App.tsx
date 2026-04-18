@@ -4,11 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { SponsoProvider } from "@/context/SponsoContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { ProfileProvider, useProfile } from "@/context/ProfileContext";
-import AgendaInput from "@/pages/AgendaInput";
-import Prospects from "@/pages/Prospects";
-import CategoryIntelligence from "@/pages/CategoryIntelligence";
+import { ProfileProvider } from "@/context/ProfileContext";
 import Campaigns from "@/pages/Campaigns";
+import CategoryIntelligence from "@/pages/CategoryIntelligence";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import LiveAgenda from "@/pages/LiveAgenda";
@@ -33,7 +31,7 @@ function RedirectIfAuthed({ children }: { children: ReactNode }) {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    if (session) navigate("/");
+    if (session) navigate("/live-agenda");
   }, [session]);
 
   if (session) return null;
@@ -41,17 +39,9 @@ function RedirectIfAuthed({ children }: { children: ReactNode }) {
 }
 
 function HomeRoute() {
-  const { effectiveRole, loading } = useProfile();
   const [, navigate] = useLocation();
-
-  useEffect(() => {
-    if (!loading && effectiveRole === "salesperson") {
-      navigate("/live-agenda");
-    }
-  }, [loading, effectiveRole]);
-
-  if (loading || effectiveRole === "salesperson") return null;
-  return <AgendaInput />;
+  useEffect(() => { navigate("/live-agenda"); }, []);
+  return null;
 }
 
 function AppShell() {
@@ -62,9 +52,8 @@ function AppShell() {
         <Switch>
           <Route path="/" component={HomeRoute} />
           <Route path="/live-agenda" component={LiveAgenda} />
-          <Route path="/prospects" component={Prospects} />
+          <Route path="/pipeline" component={Campaigns} />
           <Route path="/category" component={CategoryIntelligence} />
-          <Route path="/campaigns" component={Campaigns} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/settings" component={Settings} />
           <Route>

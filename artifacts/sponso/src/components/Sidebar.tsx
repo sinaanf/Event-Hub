@@ -1,15 +1,19 @@
 import { Link, useLocation } from "wouter";
 import {
-  CalendarDays,
   CalendarRange,
-  Users,
-  Send,
+  KanbanSquare,
   LayoutDashboard,
   Settings,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/context/ProfileContext";
+
+const NAV_ITEMS = [
+  { label: "Live Agenda", icon: CalendarRange, href: "/live-agenda" },
+  { label: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+];
 
 export function Sidebar() {
   const [location, navigate] = useLocation();
@@ -19,23 +23,13 @@ export function Sidebar() {
   const isOrganiser = effectiveRole === "organiser";
   const isViewingOverride = effectiveRole !== profile.user_role;
 
-  const NAV_ITEMS = [
-    ...(isOrganiser
-      ? [{ label: "Agenda Input", icon: CalendarDays, href: "/" }]
-      : []),
-    { label: "Live Agenda", icon: CalendarRange, href: "/live-agenda" },
-    { label: "Prospects", icon: Users, href: "/prospects" },
-    { label: "Campaigns", icon: Send, href: "/campaigns" },
-    { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  ];
-
   async function handleSignOut() {
     await signOut();
     navigate("/login");
   }
 
   function isActive(href: string) {
-    if (href === "/") return location === "/" || location === "";
+    if (href === "/live-agenda") return location === "/" || location === "" || location.startsWith("/live-agenda");
     return location.startsWith(href);
   }
 
@@ -71,19 +65,18 @@ export function Sidebar() {
         <Link
           href="/settings"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-            isActive("/settings")
+            location.startsWith("/settings")
               ? "bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] font-medium"
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           }`}
         >
           <Settings
             size={16}
-            className={isActive("/settings") ? "text-[hsl(243,75%,55%)]" : ""}
+            className={location.startsWith("/settings") ? "text-[hsl(243,75%,55%)]" : ""}
           />
           Settings
         </Link>
 
-        {/* Role toggle */}
         <button
           onClick={toggleViewAs}
           title={`Viewing as ${effectiveRole}${isViewingOverride ? " (preview)" : ""}. Click to switch view.`}
@@ -104,10 +97,7 @@ export function Sidebar() {
 
         {user && (
           <div className="px-3 pt-1 pb-0.5">
-            <p
-              className="text-xs text-muted-foreground truncate"
-              title={user.email}
-            >
+            <p className="text-xs text-muted-foreground truncate" title={user.email}>
               {user.email}
             </p>
           </div>

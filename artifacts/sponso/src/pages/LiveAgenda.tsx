@@ -11,10 +11,12 @@ import {
   RefreshCw,
   Sparkles,
   CalendarDays,
+  Search,
 } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
 import { loadPipeline, type PipelineEntry } from "@/lib/pipeline";
 import { getAccessToken } from "@/context/AuthContext";
+import { SessionProspects } from "@/components/SessionProspects";
 
 type Speaker = { name: string; company: string };
 
@@ -128,6 +130,7 @@ export default function LiveAgenda() {
   const [attachTarget, setAttachTarget] = useState<AgendaSession | null>(null);
   const [prospects, setProspects] = useState<PipelineEntry[]>([]);
   const [prospectsLoading, setProspectsLoading] = useState(false);
+  const [showProspectsForId, setShowProspectsForId] = useState<string | null>(null);
 
   async function fetchEvents() {
     setEventsLoading(true);
@@ -590,6 +593,41 @@ export default function LiveAgenda() {
                               </button>
                             )}
                           </div>
+
+                          {/* Find prospects — salesperson only */}
+                          {!isOrganiser && (
+                            <div className="pt-4 border-t border-gray-100">
+                              {showProspectsForId === session.id ? (
+                                <div className="flex flex-col gap-3">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Find prospects</p>
+                                    <button
+                                      onClick={() => setShowProspectsForId(null)}
+                                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                      ✕ Close
+                                    </button>
+                                  </div>
+                                  <SessionProspects
+                                    session_title={session.session_title || ""}
+                                    value_prop={session.sponsor_fit || session.audience || ""}
+                                    eventName={selectedEvent?.event_name || ""}
+                                    event_sector={selectedEvent?.event_sector}
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setShowProspectsForId(session.id)}
+                                  disabled={!session.sponsor_fit && !session.audience}
+                                  className="flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                  title={!session.sponsor_fit && !session.audience ? "AI content needed — ask organiser to add session brief" : ""}
+                                >
+                                  <Search size={14} />
+                                  Find prospects
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
