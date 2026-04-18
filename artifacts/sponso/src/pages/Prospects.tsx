@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSponso, type ValueProp } from "@/context/SponsoContext";
 import { useLocation, Link } from "wouter";
+import { addToPipeline } from "@/lib/pipeline";
 
 function getSenderName(): string {
   try {
@@ -60,6 +61,7 @@ type ProspectState = {
   copied: boolean;
   contactLoading: boolean;
   contact: ContactResult | null;
+  savedToCampaign: boolean;
 };
 
 function formatDate(iso: string) {
@@ -231,6 +233,7 @@ function ProspectCard({
     copied: false,
     contactLoading: false,
     contact: null,
+    savedToCampaign: false,
   });
 
   function skip() {
@@ -282,6 +285,25 @@ function ProspectCard({
       setState((s) => ({ ...s, copied: true }));
       setTimeout(() => setState((s) => ({ ...s, copied: false })), 2000);
     });
+  }
+
+  function saveToCampaign() {
+    const firstContact = state.contact?.contacts?.[0];
+    addToPipeline({
+      company_name: prospect.company_name,
+      contact_name: firstContact?.full_name || "",
+      contact_email: firstContact?.email || "",
+      contact_linkedin: firstContact?.linkedin_url || "",
+      session_title,
+      fit_reason: prospect.reason || "",
+      why_now: prospect.why_now || "",
+      sponsorship_angle: prospect.sponsorship_angle || "",
+      generated_email: state.email,
+      generated_subject: state.emailSubject,
+      event_name: eventName,
+      event_location: eventLocation || "",
+    });
+    setState((s) => ({ ...s, savedToCampaign: true }));
   }
 
   function resolveCountry(loc?: string): string | undefined {
@@ -410,7 +432,7 @@ function ProspectCard({
                 rows={8}
                 className="w-full text-xs text-foreground leading-relaxed border border-gray-200 rounded-md px-3 py-2.5 resize-y focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1 font-mono"
               />
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <button
                   onClick={copyEmail}
                   className="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors"
@@ -425,6 +447,20 @@ function ProspectCard({
                   >
                     {state.contactLoading && <Spinner />}
                     {state.contactLoading ? "Searching…" : "Find contact"}
+                  </button>
+                )}
+                {state.savedToCampaign ? (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-3 py-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Saved to pipeline
+                  </span>
+                ) : (
+                  <button
+                    onClick={saveToCampaign}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save to campaign
                   </button>
                 )}
               </div>
