@@ -287,9 +287,9 @@ function ProspectCard({
     });
   }
 
-  function saveToCampaign() {
+  async function saveToCampaign() {
     const firstContact = state.contact?.contacts?.[0];
-    addToPipeline({
+    await addToPipeline({
       company_name: prospect.company_name,
       contact_name: firstContact?.full_name || "",
       contact_email: firstContact?.email || "",

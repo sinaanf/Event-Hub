@@ -1,5 +1,10 @@
-import { useState, useCallback } from "react";
-import { loadPipeline, savePipeline, updateEntryStage, removeEntry, STAGES } from "@/lib/pipeline";
+import { useState, useEffect, useCallback } from "react";
+import {
+  loadPipeline,
+  updateEntryStage,
+  removeEntry,
+  STAGES,
+} from "@/lib/pipeline";
 import type { PipelineEntry, Stage } from "@/lib/pipeline";
 
 const STAGE_COLORS: Record<Stage, { bg: string; text: string; dot: string }> = {
@@ -17,8 +22,8 @@ const STAGE_COLORS: Record<Stage, { bg: string; text: string; dot: string }> = {
 function DetailModal({ entry, onClose, onStageChange, onDelete }: {
   entry: PipelineEntry;
   onClose: () => void;
-  onStageChange: (id: string, stage: Stage) => void;
-  onDelete: (id: string) => void;
+  onStageChange: (id: string, stage: Stage) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const colors = STAGE_COLORS[entry.stage];
   return (
@@ -104,7 +109,7 @@ function DetailModal({ entry, onClose, onStageChange, onDelete }: {
               {entry.event_name ? ` · ${entry.event_name}` : ""}
             </p>
             <button
-              onClick={() => { onDelete(entry.id); onClose(); }}
+              onClick={() => onDelete(entry.id).then(onClose)}
               className="text-xs text-red-400 hover:text-red-600 transition-colors"
             >
               Remove from pipeline
@@ -129,7 +134,7 @@ function KanbanCard({ entry, onClick }: { entry: PipelineEntry; onClick: () => v
       draggable
       onDragStart={handleDragStart}
       onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-[hsl(243,75%,70%)] hover:shadow-sm transition-all group"
+      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-[hsl(243,75%,70%)] hover:shadow-sm transition-all"
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <p className="text-xs font-semibold text-foreground leading-snug">{entry.company_name}</p>
@@ -163,10 +168,6 @@ function KanbanColumn({ stage, entries, onDrop, onCardClick }: {
     setDragOver(true);
   }
 
-  function handleDragLeave() {
-    setDragOver(false);
-  }
-
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
@@ -178,7 +179,7 @@ function KanbanColumn({ stage, entries, onDrop, onCardClick }: {
     <div
       className={`flex flex-col shrink-0 w-56 rounded-xl transition-colors ${dragOver ? "bg-[hsl(243,75%,97%)]" : "bg-gray-50"}`}
       onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
+      onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
     >
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
@@ -201,26 +202,38 @@ function KanbanColumn({ stage, entries, onDrop, onCardClick }: {
 }
 
 export default function Campaigns() {
-  const [entries, setEntries] = useState<PipelineEntry[]>(() => loadPipeline());
+  const [entries, setEntries] = useState<PipelineEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PipelineEntry | null>(null);
 
-  const reload = useCallback(() => setEntries(loadPipeline()), []);
+  const reload = useCallback(async () => {
+    const data = await loadPipeline();
+    setEntries(data);
+  }, []);
 
-  function handleDrop(entryId: string, stage: Stage) {
-    updateEntryStage(entryId, stage);
-    reload();
+  useEffect(() => {
+    setLoading(true);
+    loadPipeline()
+      .then(setEntries)
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleDrop(entryId: string, stage: Stage) {
+    await updateEntryStage(entryId, stage);
+    await reload();
   }
 
-  function handleStageChange(id: string, stage: Stage) {
-    updateEntryStage(id, stage);
-    const updated = loadPipeline();
-    setEntries(updated);
-    setSelected(updated.find((e) => e.id === id) || null);
+  async function handleStageChange(id: string, stage: Stage) {
+    await updateEntryStage(id, stage);
+    await reload();
+    setSelected((prev) =>
+      prev?.id === id ? { ...prev, stage } : prev,
+    );
   }
 
-  function handleDelete(id: string) {
-    removeEntry(id);
-    reload();
+  async function handleDelete(id: string) {
+    await removeEntry(id);
+    await reload();
     setSelected(null);
   }
 
@@ -229,25 +242,22 @@ export default function Campaigns() {
   const totalContacted = entries.filter((e) =>
     ["Contacted", "Opened", "Replied", "Proposal Sent", "Closed Won", "Activated", "Renewed"].includes(e.stage)
   ).length;
-  const totalClosedWon = byStage("Closed Won").length;
-  const totalRenewed = byStage("Renewed").length;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* Header & metrics */}
       <div className="px-8 pt-8 pb-5 border-b border-gray-100 bg-white shrink-0">
         <h1 className="text-xl font-semibold text-foreground mb-1">Campaign Pipeline</h1>
         <p className="text-sm text-muted-foreground mb-5">
           Track your sponsor prospects from identification to renewal.
         </p>
 
-        {entries.length === 0 ? null : (
+        {!loading && entries.length > 0 && (
           <div className="flex gap-6">
             {[
               { label: "Total prospects", value: entries.length },
               { label: "Contacted", value: totalContacted },
-              { label: "Closed won", value: totalClosedWon },
-              { label: "Renewed", value: totalRenewed },
+              { label: "Closed won", value: byStage("Closed Won").length },
+              { label: "Renewed", value: byStage("Renewed").length },
             ].map(({ label, value }) => (
               <div key={label} className="flex flex-col">
                 <span className="text-2xl font-bold text-foreground">{value}</span>
@@ -258,8 +268,14 @@ export default function Campaigns() {
         )}
       </div>
 
-      {/* Kanban board */}
-      {entries.length === 0 ? (
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Loading pipeline…
+          </div>
+        </div>
+      ) : entries.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center max-w-xs">
             <div className="w-12 h-12 rounded-full bg-[hsl(243,75%,97%)] flex items-center justify-center">
@@ -269,7 +285,7 @@ export default function Campaigns() {
               </svg>
             </div>
             <p className="text-sm font-medium text-foreground">Pipeline is empty</p>
-            <p className="text-xs text-muted-foreground">Approve a prospect on the Prospects page, generate an email, then click "Save to campaign".</p>
+            <p className="text-xs text-muted-foreground">Approve a prospect, generate an email, then click "Save to campaign".</p>
           </div>
         </div>
       ) : (

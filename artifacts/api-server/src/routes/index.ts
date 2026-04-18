@@ -11,6 +11,8 @@ import suggestProspectsRouter from "./suggestProspects";
 import generateEmailRouter from "./generateEmail";
 import categoryIntelligenceRouter from "./categoryIntelligence";
 import findContactRouter from "./findContact";
+import pipelineRouter from "./pipeline";
+import profileRouter from "./profile";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(suggestProspectsRouter);
 router.use(generateEmailRouter);
 router.use(categoryIntelligenceRouter);
 router.use(findContactRouter);
+router.use("/pipeline", pipelineRouter);
+router.use("/profile", profileRouter);
 
 export default router;

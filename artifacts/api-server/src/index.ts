@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { runMigrations } from "./lib/runMigrations";
 
 const rawPort = process.env["PORT"];
 
@@ -23,3 +24,7 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 });
+
+runMigrations().catch((err) =>
+  logger.error({ err }, "Migration check failed"),
+);

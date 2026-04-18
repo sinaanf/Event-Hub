@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const PERSONAL_KEY = "sinoo_profile";
 const COMPANY_KEY = "sinooprofile";
@@ -46,6 +46,33 @@ export default function Settings() {
   const [personal, setPersonal] = useState<PersonalProfile>(loadPersonal);
   const [company, setCompany] = useState<CompanyProfile>(loadCompany);
   const [saved, setSaved] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data) return;
+        setProfileId(data.id);
+        const p: PersonalProfile = {
+          fullName: data.user_name || "",
+          jobTitle: loadPersonal().jobTitle,
+          company: loadPersonal().company,
+        };
+        const c: CompanyProfile = {
+          orgName: data.organisation_name || "",
+          eventSector: data.event_sector || "",
+          icp: data.icp || "",
+          packages: data.sponsorship_packages || "",
+        };
+        setPersonal(p);
+        setCompany(c);
+        localStorage.setItem(PERSONAL_KEY, JSON.stringify(p));
+        localStorage.setItem(COMPANY_KEY, JSON.stringify(c));
+      })
+      .catch((err) => console.error("[settings] profile load error:", err));
+  }, []);
 
   function handlePersonal(field: keyof PersonalProfile, value: string) {
     setPersonal((p) => ({ ...p, [field]: value }));
@@ -57,10 +84,35 @@ export default function Settings() {
     setSaved(false);
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     localStorage.setItem(PERSONAL_KEY, JSON.stringify(personal));
     localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
+
+    try {
+      const payload = {
+        id: profileId || undefined,
+        organisation_name: company.orgName,
+        event_sector: company.eventSector,
+        icp: company.icp,
+        sponsorship_packages: company.packages,
+        user_name: personal.fullName,
+      };
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.id) setProfileId(data.id);
+      } else {
+        console.error("[settings] profile save failed:", res.status);
+      }
+    } catch (err) {
+      console.error("[settings] profile save error:", err);
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
@@ -77,7 +129,6 @@ export default function Settings() {
         </p>
 
         <form onSubmit={handleSave} className="flex flex-col gap-6">
-          {/* Personal details */}
           <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your details</p>
 
@@ -115,7 +166,6 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Company / event profile */}
           <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-5">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company profile</p>
 
