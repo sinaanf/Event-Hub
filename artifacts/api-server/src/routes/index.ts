@@ -14,6 +14,7 @@ import findContactRouter from "./findContact";
 import pipelineRouter from "./pipeline";
 import profileRouter from "./profile";
 import authRouter from "./auth";
+import agendaSessionsRouter from "./agendaSessions";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(findContactRouter);
 router.use("/pipeline", pipelineRouter);
 router.use("/profile", profileRouter);
 router.use("/auth", authRouter);
+router.use("/sessions", agendaSessionsRouter);
 
 export default router;
