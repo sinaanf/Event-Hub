@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getAccessToken } from "@/context/AuthContext";
 
 const PERSONAL_KEY = "sinoo_profile";
 const COMPANY_KEY = "sinooprofile";
@@ -42,6 +43,13 @@ export function loadCompanyProfile(): CompanyProfile {
   return loadCompany();
 }
 
+function authHeaders() {
+  const token = getAccessToken();
+  return token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    : { "Content-Type": "application/json" };
+}
+
 export default function Settings() {
   const [personal, setPersonal] = useState<PersonalProfile>(loadPersonal);
   const [company, setCompany] = useState<CompanyProfile>(loadCompany);
@@ -49,7 +57,11 @@ export default function Settings() {
   const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/profile")
+    const token = getAccessToken();
+    if (!token) return;
+    fetch("/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then(async (res) => {
         if (!res.ok) return;
         const data = await res.json();
@@ -100,7 +112,7 @@ export default function Settings() {
       };
       const res = await fetch("/api/profile", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify(payload),
       });
       if (res.ok) {

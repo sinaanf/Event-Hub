@@ -13,6 +13,7 @@ import categoryIntelligenceRouter from "./categoryIntelligence";
 import findContactRouter from "./findContact";
 import pipelineRouter from "./pipeline";
 import profileRouter from "./profile";
+import authRouter from "./auth";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(categoryIntelligenceRouter);
 router.use(findContactRouter);
 router.use("/pipeline", pipelineRouter);
 router.use("/profile", profileRouter);
+router.use("/auth", authRouter);
 
 export default router;

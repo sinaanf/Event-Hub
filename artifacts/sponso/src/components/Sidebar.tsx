@@ -5,7 +5,9 @@ import {
   Send,
   LayoutDashboard,
   Settings,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Agenda Input", icon: CalendarDays, href: "/" },
@@ -15,7 +17,13 @@ const NAV_ITEMS = [
 ];
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { signOut, user } = useAuth();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate("/login");
+  }
 
   return (
     <aside className="w-56 shrink-0 flex flex-col border-r border-border bg-white h-screen sticky top-0">
@@ -52,7 +60,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 pb-3 border-t border-border pt-3">
+      <div className="px-3 pb-3 border-t border-border pt-3 flex flex-col gap-0.5">
         <Link
           href="/settings"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
@@ -64,6 +72,20 @@ export function Sidebar() {
           <Settings size={16} className={location.startsWith("/settings") ? "text-[hsl(243,75%,55%)]" : ""} />
           Settings
         </Link>
+
+        {user && (
+          <div className="px-3 pt-2 pb-1">
+            <p className="text-xs text-muted-foreground truncate" title={user.email}>{user.email}</p>
+          </div>
+        )}
+
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors w-full text-left"
+        >
+          <LogOut size={16} />
+          Sign out
+        </button>
       </div>
     </aside>
   );

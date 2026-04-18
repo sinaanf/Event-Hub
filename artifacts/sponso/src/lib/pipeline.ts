@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/context/AuthContext";
+
 export const STAGES = [
   "Identified",
   "Contacted",
@@ -46,9 +48,16 @@ function lsSave(entries: PipelineEntry[]): void {
   } catch {}
 }
 
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    : { "Content-Type": "application/json" };
+}
+
 export async function loadPipeline(): Promise<PipelineEntry[]> {
   try {
-    const res = await fetch("/api/pipeline");
+    const res = await fetch("/api/pipeline", { headers: authHeaders() });
     if (res.ok) {
       const data: PipelineEntry[] = await res.json();
       lsSave(data);
@@ -67,7 +76,7 @@ export async function addToPipeline(
   try {
     const res = await fetch("/api/pipeline", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify(entry),
     });
     if (res.ok) {
@@ -97,7 +106,7 @@ export async function updateEntryStage(id: string, stage: Stage): Promise<void> 
   try {
     const res = await fetch(`/api/pipeline/${id}/stage`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ stage }),
     });
     if (!res.ok) console.error("[pipeline] API stage update failed:", res.status);
@@ -114,7 +123,10 @@ export async function updateEntryStage(id: string, stage: Stage): Promise<void> 
 
 export async function removeEntry(id: string): Promise<void> {
   try {
-    const res = await fetch(`/api/pipeline/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/pipeline/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
     if (!res.ok) console.error("[pipeline] API delete failed:", res.status);
   } catch (err) {
     console.error("[pipeline] API delete error:", err);

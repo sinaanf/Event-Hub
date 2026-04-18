@@ -1,15 +1,17 @@
 import { Router } from "express";
 import { supabase } from "../lib/supabase";
+import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  if (!supabase) {
-    return res.status(503).json({ error: "Supabase not configured" });
-  }
+router.use(requireAuth);
+
+router.get("/", async (req: AuthRequest, res) => {
+  if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
   const { data, error } = await supabase
     .from("sinoo_profile")
     .select("*")
+    .eq("user_id", req.userId!)
     .order("created_at", { ascending: true })
     .limit(1)
     .single();
@@ -20,16 +22,16 @@ router.get("/", async (_req, res) => {
   return res.json(data || null);
 });
 
-router.post("/", async (req, res) => {
-  if (!supabase) {
-    return res.status(503).json({ error: "Supabase not configured" });
-  }
+router.post("/", async (req: AuthRequest, res) => {
+  if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
   const { id, ...payload } = req.body;
+  const withUser = { ...payload, user_id: req.userId };
   if (id) {
     const { data, error } = await supabase
       .from("sinoo_profile")
-      .update(payload)
+      .update(withUser)
       .eq("id", id)
+      .eq("user_id", req.userId!)
       .select()
       .single();
     if (error) {
@@ -38,10 +40,9 @@ router.post("/", async (req, res) => {
     }
     return res.json(data);
   }
-
   const { data, error } = await supabase
     .from("sinoo_profile")
-    .insert([payload])
+    .insert([withUser])
     .select()
     .single();
   if (error) {
