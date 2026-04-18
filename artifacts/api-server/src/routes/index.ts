@@ -15,11 +15,13 @@ import pipelineRouter from "./pipeline";
 import profileRouter from "./profile";
 import authRouter from "./auth";
 import agendaSessionsRouter from "./agendaSessions";
+import agendaEventsRouter from "./eventsSupabase";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/sessions", agendaSessionsRouter);
+router.use("/events", agendaEventsRouter);
 router.use(eventsRouter);
 router.use(speakersRouter);
 router.use(sessionsRouter);

@@ -1,10 +1,12 @@
 import { Router } from "express";
+import Anthropic from "@anthropic-ai/sdk";
 import { supabase } from "../lib/supabase";
 import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
 
 const router = Router();
-
 router.use(requireAuth);
+
+const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 async function getUserRole(userId: string): Promise<string> {
   if (!supabase) return "salesperson";
@@ -17,9 +19,7 @@ async function getUserRole(userId: string): Promise<string> {
   return data?.user_role ?? "salesperson";
 }
 
-function requireOrganiser(
-  handler: (req: AuthRequest, res: any) => Promise<any>,
-) {
+function requireOrganiser(handler: (req: AuthRequest, res: any) => Promise<any>) {
   return async (req: AuthRequest, res: any) => {
     const role = await getUserRole(req.userId!);
     if (role !== "organiser") {
@@ -27,6 +27,64 @@ function requireOrganiser(
     }
     return handler(req, res);
   };
+}
+
+async function generateSessionAI(
+  sessionId: string,
+  sessionTitle: string | null,
+  format: string | null,
+  sessionBrief: string | null,
+  eventId: string | null,
+): Promise<{ audience: string | null; sponsor_fit: string | null }> {
+  if (!supabase) return { audience: null, sponsor_fit: null };
+
+  let eventSector: string | null = null;
+  if (eventId) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("event_sector")
+      .eq("id", eventId)
+      .single();
+    eventSector = event?.event_sector ?? null;
+  }
+
+  const prompt = [
+    "B2B conference session details:",
+    eventSector ? `Event sector: ${eventSector}` : "",
+    sessionTitle ? `Session title: ${sessionTitle}` : "",
+    format ? `Format: ${format}` : "",
+    sessionBrief ? `Session brief:\n${sessionBrief}` : "",
+    "\nWrite two things:",
+    "audience: Exactly 2 sentences describing who is in the room — specific job titles, seniority level, what they are actively deciding right now.",
+    "sponsor_fit: Exactly 2 sentences on which sponsor categories belong in this session and the specific commercial reason why.",
+    '\nReturn JSON only: {"audience": "...", "sponsor_fit": "..."}',
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const msg = await anthropicClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 350,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    let raw = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+    raw = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
+    const parsed = JSON.parse(raw);
+    const audience = parsed.audience || null;
+    const sponsor_fit = parsed.sponsor_fit || null;
+
+    await supabase
+      .from("sessions")
+      .update({ audience, sponsor_fit, updated_at: new Date().toISOString() })
+      .eq("id", sessionId);
+
+    return { audience, sponsor_fit };
+  } catch (err) {
+    console.error("[agendaSessions] AI generation error:", err);
+    return { audience: null, sponsor_fit: null };
+  }
 }
 
 router.get("/", async (req: AuthRequest, res) => {
@@ -46,38 +104,38 @@ router.post(
   "/",
   requireOrganiser(async (req, res) => {
     if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
-    const {
-      event_name,
-      event_date,
-      session_title,
-      format,
-      audience,
-      sponsor_fit,
-      status,
-      speakers,
-    } = req.body;
+    const { session_title, format, session_brief, speakers, event_id, status } = req.body;
+
     const { data, error } = await supabase
       .from("sessions")
       .insert([
         {
-          event_name: event_name ?? null,
-          event_date: event_date ?? null,
           session_title: session_title ?? null,
           format: format ?? null,
-          audience: audience ?? null,
-          sponsor_fit: sponsor_fit ?? null,
-          status: status ?? "available",
+          session_brief: session_brief ?? null,
           speakers: speakers ?? [],
+          event_id: event_id ?? null,
+          status: status ?? "available",
           created_by: req.userId,
         },
       ])
       .select()
       .single();
+
     if (error) {
       console.error("[agendaSessions] insert error:", error.message);
       return res.status(500).json({ error: error.message });
     }
-    return res.status(201).json(data);
+
+    const ai = await generateSessionAI(
+      data.id,
+      session_title ?? null,
+      format ?? null,
+      session_brief ?? null,
+      event_id ?? null,
+    );
+
+    return res.status(201).json({ ...data, ...ai });
   }),
 );
 
@@ -86,38 +144,37 @@ router.patch(
   requireOrganiser(async (req, res) => {
     if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
     const { id } = req.params;
-    const {
-      event_name,
-      event_date,
-      session_title,
-      format,
-      audience,
-      sponsor_fit,
-      status,
-      speakers,
-    } = req.body;
-    const payload: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
-    if (event_name !== undefined) payload.event_name = event_name;
-    if (event_date !== undefined) payload.event_date = event_date;
+    const { session_title, format, session_brief, speakers, status, event_id } = req.body;
+
+    const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (session_title !== undefined) payload.session_title = session_title;
     if (format !== undefined) payload.format = format;
-    if (audience !== undefined) payload.audience = audience;
-    if (sponsor_fit !== undefined) payload.sponsor_fit = sponsor_fit;
-    if (status !== undefined) payload.status = status;
+    if (session_brief !== undefined) payload.session_brief = session_brief;
     if (speakers !== undefined) payload.speakers = speakers;
+    if (status !== undefined) payload.status = status;
+    if (event_id !== undefined) payload.event_id = event_id;
+
     const { data, error } = await supabase
       .from("sessions")
       .update(payload)
       .eq("id", id)
       .select()
       .single();
+
     if (error) {
       console.error("[agendaSessions] update error:", error.message);
       return res.status(500).json({ error: error.message });
     }
-    return res.json(data);
+
+    const ai = await generateSessionAI(
+      id,
+      (session_title ?? data.session_title) as string | null,
+      (format ?? data.format) as string | null,
+      (session_brief ?? data.session_brief) as string | null,
+      (event_id ?? data.event_id) as string | null,
+    );
+
+    return res.json({ ...data, ...ai });
   }),
 );
 
@@ -140,9 +197,7 @@ router.patch("/:id/prospect", async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { prospect_company, prospect_contact, prospect_stage } = req.body;
 
-  const payload: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (prospect_company !== undefined) payload.prospect_company = prospect_company;
   if (prospect_contact !== undefined) payload.prospect_contact = prospect_contact;
   if (prospect_stage !== undefined) payload.prospect_stage = prospect_stage;
@@ -159,11 +214,38 @@ router.patch("/:id/prospect", async (req: AuthRequest, res) => {
     .eq("id", id)
     .select()
     .single();
+
   if (error) {
     console.error("[agendaSessions] prospect update error:", error.message);
     return res.status(500).json({ error: error.message });
   }
   return res.json(data);
+});
+
+router.post("/:id/regenerate", async (req: AuthRequest, res) => {
+  if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
+  const { id } = req.params;
+
+  const { data: session, error: fetchErr } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchErr || !session) {
+    return res.status(404).json({ error: "Session not found" });
+  }
+
+  await generateSessionAI(
+    id,
+    session.session_title,
+    session.format,
+    session.session_brief,
+    session.event_id,
+  );
+
+  const { data: updated } = await supabase.from("sessions").select("*").eq("id", id).single();
+  return res.json(updated);
 });
 
 export default router;
