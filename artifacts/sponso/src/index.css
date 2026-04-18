@@ -67,7 +67,7 @@
   --elevate-1: rgba(0,0,0,.03);
   --elevate-2: rgba(0,0,0,.08);
 
-  --background: 0 0% 98%;
+  --background: 45 22% 96%;
   --foreground: 222 47% 11%;
   --border: 220 13% 91%;
   --input: 220 13% 88%;
@@ -96,7 +96,7 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 0 0% 100%;
+  --sidebar: 43 19% 93%;
   --sidebar-foreground: 222 47% 11%;
   --sidebar-border: 220 13% 91%;
   --sidebar-primary: 243 75% 59%;

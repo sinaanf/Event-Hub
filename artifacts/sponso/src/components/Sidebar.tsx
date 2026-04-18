@@ -26,7 +26,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col border-r border-border bg-white h-screen sticky top-0">
+    <aside className="w-56 shrink-0 flex flex-col border-r border-border bg-sidebar h-screen sticky top-0">
       <div className="px-5 py-5 border-b border-border">
         <span className="text-[17px] font-semibold tracking-tight text-foreground">
           sinoo
