@@ -19,6 +19,7 @@ import agendaSessionsRouter from "./agendaSessions";
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use("/sessions", agendaSessionsRouter);
 router.use(eventsRouter);
 router.use(speakersRouter);
 router.use(sessionsRouter);
@@ -33,6 +34,5 @@ router.use(findContactRouter);
 router.use("/pipeline", pipelineRouter);
 router.use("/profile", profileRouter);
 router.use("/auth", authRouter);
-router.use("/sessions", agendaSessionsRouter);
 
 export default router;
