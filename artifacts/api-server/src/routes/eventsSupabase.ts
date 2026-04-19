@@ -5,64 +5,40 @@ import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
 const router = Router();
 router.use(requireAuth);
 
-function slugify(text: string): string {
-  return (
-    text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") +
-    "-" + Date.now()
-  );
-}
-
 router.get("/", async (req: AuthRequest, res) => {
   if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
   const { data, error } = await supabase
     .from("events")
     .select("*")
     .order("created_at", { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error("[events] list error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
   return res.json(data);
 });
 
 router.post("/", async (req: AuthRequest, res) => {
   if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
-  const { name, start_date, end_date, sector, venue, city, country } = req.body;
-  if (!name || !start_date || !end_date)
-    return res.status(400).json({ error: "name, start_date and end_date are required" });
-
-  const slug = slugify(name);
+  const { event_name, event_date, event_sector } = req.body;
+  if (!event_name) {
+    return res.status(400).json({ error: "event_name is required" });
+  }
   const { data, error } = await supabase
     .from("events")
     .insert([{
-      name, slug, start_date, end_date,
-      sector: sector || null,
-      venue: venue || null,
-      city: city || null,
-      country: country || null,
-      org_id: req.userId,
-      status: "draft",
+      event_name,
+      event_date: event_date || null,
+      event_sector: event_sector || null,
+      created_by: req.userId,
     }])
     .select()
     .single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error("[events] insert error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
   return res.status(201).json(data);
-});
-
-router.patch("/:id", async (req: AuthRequest, res) => {
-  if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
-  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  ["name", "start_date", "end_date", "sector", "venue", "city", "country", "status", "attendee_count_target"].forEach(
-    (f) => { if (req.body[f] !== undefined) payload[f] = req.body[f]; }
-  );
-  const { data, error } = await supabase
-    .from("events").update(payload).eq("id", req.params.id).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
-});
-
-router.delete("/:id", async (req: AuthRequest, res) => {
-  if (!supabase) return res.status(503).json({ error: "Supabase not configured" });
-  const { error } = await supabase.from("events").delete().eq("id", req.params.id);
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true });
 });
 
 export default router;

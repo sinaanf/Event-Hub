@@ -1,4 +1,3 @@
-import tracksRouter from "./tracksRouter";
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import eventsRouter from "./events";
@@ -26,7 +25,6 @@ router.use("/events", agendaEventsRouter);
 router.use(eventsRouter);
 router.use(speakersRouter);
 router.use(sessionsRouter);
-router.use("/tracks", tracksRouter)
 router.use(attendeesRouter);
 router.use(analyticsRouter);
 router.use(valuePropsRouter);
