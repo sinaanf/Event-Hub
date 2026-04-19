@@ -46,6 +46,7 @@
     "@tanstack/react-query": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@workspace/api-client-react": "workspace:*",
@@ -75,6 +76,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.103.3"
+    "@supabase/supabase-js": "^2.103.3",
+    "react-big-calendar": "^1.19.4"
   }
 }
