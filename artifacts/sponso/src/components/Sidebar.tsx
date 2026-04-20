@@ -5,12 +5,14 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/context/ProfileContext";
 
 const NAV_ITEMS = [
   { label: "Live Agenda", icon: CalendarRange, href: "/live-agenda" },
+  { label: "Speakers", icon: Users, href: "/speakers" },
   { label: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 ];

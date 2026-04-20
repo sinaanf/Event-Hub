@@ -43,7 +43,7 @@ export function loadCompanyProfile(): CompanyProfile {
   return loadCompany();
 }
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   const token = getAccessToken();
   return token
     ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }

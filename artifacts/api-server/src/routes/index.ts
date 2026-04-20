@@ -12,12 +12,15 @@ import profileRouter from "./profile";
 import authRouter from "./auth";
 import agendaSessionsRouter from "./agendaSessions";
 import agendaEventsRouter from "./eventsSupabase";
+import tracksRouter from "./tracksRouter";
+import speakersRouter from "./speakers";
 
 const router: IRouter = Router();
-
 router.use(healthRouter);
 router.use("/sessions", agendaSessionsRouter);
 router.use("/events", agendaEventsRouter);
+router.use("/tracks", tracksRouter);
+router.use("/speakers", speakersRouter);
 router.use(analyticsRouter);
 router.use(valuePropsRouter);
 router.use(companyNewsRouter);
@@ -28,5 +31,4 @@ router.use(findContactRouter);
 router.use("/pipeline", pipelineRouter);
 router.use("/profile", profileRouter);
 router.use("/auth", authRouter);
-
 export default router;

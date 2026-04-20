@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import LiveAgenda from "@/pages/LiveAgenda";
 import Login from "@/pages/Login";
+import Speakers from "@/pages/Speakers";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ function AppShell() {
         <Switch>
           <Route path="/" component={HomeRoute} />
           <Route path="/live-agenda" component={LiveAgenda} />
+          <Route path="/speakers" component={Speakers} />
           <Route path="/pipeline" component={Campaigns} />
           <Route path="/category" component={CategoryIntelligence} />
           <Route path="/dashboard" component={Dashboard} />
