@@ -12,6 +12,7 @@ import Settings from "@/pages/Settings";
 import LiveAgenda from "@/pages/LiveAgenda";
 import Login from "@/pages/Login";
 import Speakers from "@/pages/Speakers";
+import Prospects from "@/pages/Prospects";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ function AppShell() {
           <Route path="/category" component={CategoryIntelligence} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/settings" component={Settings} />
+          <Route path="/prospects" component={Prospects} />
           <Route>
             <div className="flex-1 flex items-center justify-center p-8">
               <p className="text-sm text-muted-foreground">Page not found</p>

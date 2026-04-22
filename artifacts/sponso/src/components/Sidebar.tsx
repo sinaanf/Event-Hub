@@ -6,13 +6,20 @@ import {
   Settings,
   LogOut,
   Users,
+  Target,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/context/ProfileContext";
 
-const NAV_ITEMS = [
+const ORGANISER_NAV = [
   { label: "Live Agenda", icon: CalendarRange, href: "/live-agenda" },
   { label: "Speakers", icon: Users, href: "/speakers" },
+  { label: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+];
+
+const SALESPERSON_NAV = [
+  { label: "Prospects", icon: Target, href: "/prospects" },
   { label: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 ];
@@ -44,7 +51,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-0.5 p-3 flex-1">
-        {NAV_ITEMS.map(({ label, icon: Icon, href }) => (
+        {(isOrganiser ? ORGANISER_NAV : SALESPERSON_NAV).map(({ label, icon: Icon, href }) => (
           <Link
             key={href}
             href={href}
