@@ -817,4 +817,4 @@ export default function LiveAgenda() {
       )}
     </div>
   );
-  }
+}
