@@ -1,46 +1,38 @@
 import { useState, useEffect } from "react";
-import { useProfile } from "../context/ProfileContext";
+import { getAccessToken } from "@/context/AuthContext";
+import { useProfile } from "@/context/ProfileContext";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { toast } from "../hooks/use-toast";
+import { CalendarDays, Loader2 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+function authHdrs(): Record<string, string> {
+  const token = getAccessToken();
+  return token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    : { "Content-Type": "application/json" };
+}
+
+type SinooEvent = { id: string; name: string };
 
 interface Session {
-  id: string;
-  title: string;
-  start_time: string;
-  end_time: string;
-  day: string;
-  status: string;
-  event_id: string;
+  id: string; title: string; start_time: string;
+  end_time: string; day: string; status: string; event_id: string;
   events?: { id: string; name: string };
 }
 
-interface SessionSpeaker {
-  session_id: string;
-  sessions: Session;
-}
+interface SessionSpeaker { session_id: string; sessions: Session; }
 
 interface CommsLog {
-  id: string;
-  action_type: string;
-  sent_at: string;
-  notes: string | null;
+  id: string; action_type: string; sent_at: string; notes: string | null;
 }
 
 interface Speaker {
-  id: string;
-  name: string;
-  job_title: string | null;
-  company: string | null;
-  headshot_url: string | null;
-  email: string | null;
-  phone: string | null;
-  event_id: string;
-  session_speakers: SessionSpeaker[];
+  id: string; name: string; job_title: string | null; company: string | null;
+  headshot_url: string | null; email: string | null; phone: string | null;
+  event_id: string; session_speakers: SessionSpeaker[];
   speaker_comms_log?: CommsLog[];
 }
 
@@ -58,57 +50,73 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export default function Speakers() {
-  const { profile } = useProfile();
-  const isOrganiser = profile?.user_role === "organiser";
-  const eventId = profile?.current_event_id;
+  const { effectiveRole } = useProfile();
+  const isOrganiser = effectiveRole === "organiser";
 
+  const [events, setEvents] = useState<SinooEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [selected, setSelected] = useState<Speaker | null>(null);
-  const [form, setForm] = useState({
-    name: "", job_title: "", company: "", headshot_url: "", email: "", phone: ""
-  });
+  const [form, setForm] = useState({ name: "", job_title: "", company: "", headshot_url: "", email: "", phone: "" });
   const [assigning, setAssigning] = useState<string | null>(null);
 
   useEffect(() => {
-    if (eventId) {
+    async function fetchEvents() {
+      setEventsLoading(true);
+      try {
+        const res = await fetch("/api/events", { headers: authHdrs() });
+        if (res.ok) {
+          const data: SinooEvent[] = await res.json();
+          setEvents(data);
+          if (data.length > 0) setSelectedEventId(data[0].id);
+        }
+      } catch (err) { console.error(err); }
+      finally { setEventsLoading(false); }
+    }
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    if (selectedEventId) {
       fetchSpeakers();
       fetchSessions();
     }
-  }, [eventId]);
+  }, [selectedEventId]);
 
   async function fetchSpeakers() {
     setLoading(true);
-    const res = await fetch(`${API}/api/speakers?event_id=${eventId}`, { credentials: "include" });
-    const data = await res.json();
-    setSpeakers(Array.isArray(data) ? data : []);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/speakers?event_id=${selectedEventId}`, { headers: authHdrs() });
+      const data = await res.json();
+      setSpeakers(Array.isArray(data) ? data : []);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }
 
   async function fetchSessions() {
-    const res = await fetch(`${API}/api/sessions?event_id=${eventId}`, { credentials: "include" });
-    const data = await res.json();
-    setSessions(Array.isArray(data) ? data : []);
+    try {
+      const res = await fetch(`/api/sessions?event_id=${selectedEventId}`, { headers: authHdrs() });
+      const data = await res.json();
+      setSessions(Array.isArray(data) ? data : []);
+    } catch (err) { console.error(err); }
   }
 
   async function fetchSpeakerDetail(id: string) {
-    const res = await fetch(`${API}/api/speakers/${id}`, { credentials: "include" });
-    if (!res.ok) return;
+    const res = await fetch(`/api/speakers/${id}`, { headers: authHdrs() });
+    if (!res.ok) { toast({ title: "Could not load speaker details", variant: "destructive" }); return; }
     const data = await res.json();
-    if (data && typeof data === "object" && !data.error) {
-      setSelected(data);
-    }
+    if (data && typeof data === "object" && !data.error) setSelected(data);
   }
 
   async function handleAddSpeaker() {
     if (!form.name.trim()) return;
-    const res = await fetch(`${API}/api/speakers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ ...form, event_id: eventId }),
+    const res = await fetch("/api/speakers", {
+      method: "POST", headers: authHdrs(),
+      body: JSON.stringify({ ...form, event_id: selectedEventId }),
     });
     if (res.ok) {
       toast({ title: "Speaker added" });
@@ -122,9 +130,8 @@ export default function Speakers() {
 
   async function handleAssign(speakerId: string, sessionId: string) {
     setAssigning(sessionId);
-    const res = await fetch(`${API}/api/speakers/${speakerId}/sessions/${sessionId}`, {
-      method: "POST",
-      credentials: "include",
+    const res = await fetch(`/api/speakers/${speakerId}/sessions/${sessionId}`, {
+      method: "POST", headers: authHdrs(),
     });
     setAssigning(null);
     if (res.ok) {
@@ -137,16 +144,15 @@ export default function Speakers() {
   }
 
   async function handleUnassign(speakerId: string, sessionId: string) {
-    await fetch(`${API}/api/speakers/${speakerId}/sessions/${sessionId}`, {
-      method: "DELETE",
-      credentials: "include",
+    await fetch(`/api/speakers/${speakerId}/sessions/${sessionId}`, {
+      method: "DELETE", headers: authHdrs(),
     });
     fetchSpeakerDetail(speakerId);
     fetchSpeakers();
   }
 
   async function handleDelete(id: string) {
-    await fetch(`${API}/api/speakers/${id}`, { method: "DELETE", credentials: "include" });
+    await fetch(`/api/speakers/${id}`, { method: "DELETE", headers: authHdrs() });
     setSelected(null);
     fetchSpeakers();
   }
@@ -155,103 +161,107 @@ export default function Speakers() {
     ? new Set(selected.session_speakers?.map((ss) => ss.session_id))
     : new Set();
 
-  const availableSessions = sessions.filter((s) => !assignedSessionIds.has(s.id));
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-sm text-muted-foreground">Loading speakers...</div>
-    </div>
+  const availableSessions = sessions.filter(
+    (s) => !assignedSessionIds.has(s.id) && s.event_id === selectedEventId
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#F8F7F4]">
+      {/* Header */}
+      <div className="px-8 pt-8 pb-5 border-b border-gray-100 bg-white shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-            Speakers
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{speakers.length} speaker{speakers.length !== 1 ? "s" : ""} confirmed</p>
+          <h1 className="text-xl font-semibold text-foreground">Speakers</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your speaker directory and session assignments.</p>
         </div>
-        {isOrganiser && (
+        {isOrganiser && selectedEventId && (
           <Button onClick={() => setShowAdd(true)}>+ Add Speaker</Button>
         )}
       </div>
 
-      {speakers.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          <p className="text-lg font-medium mb-1">No speakers yet</p>
-          <p className="text-sm">Add your first speaker to get started</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {speakers.map((speaker) => {
-            const allEvents = speaker.session_speakers?.flatMap((ss) => ss.sessions?.events ? [ss.sessions.events] : []);
-            const uniqueEvents = [...new Map(allEvents.map((e) => [e?.id, e])).values()];
-            const isReturning = uniqueEvents.length > 1 || (uniqueEvents.length === 1 && uniqueEvents[0]?.id !== eventId);
+      {/* Event selector */}
+      <div className="px-8 py-3 border-b border-gray-100 bg-white shrink-0 flex items-center gap-3">
+        {eventsLoading ? (
+          <Loader2 size={14} className="animate-spin text-muted-foreground" />
+        ) : events.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No events yet — create one in Agenda Builder.</p>
+        ) : (
+          <>
+            <CalendarDays size={15} className="text-muted-foreground shrink-0" />
+            <select
+              value={selectedEventId ?? ""}
+              onChange={(e) => setSelectedEventId(e.target.value || null)}
+              className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] max-w-xs"
+            >
+              {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </>
+        )}
+      </div>
 
-            return (
-              <div
-                key={speaker.id}
-                onClick={() => fetchSpeakerDetail(speaker.id)}
-                className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  {speaker.headshot_url ? (
-                    <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
-                      {(speaker.name || "?").charAt(0)}
+      {/* Body */}
+      <div className="flex-1 p-8">
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <Loader2 size={20} className="animate-spin text-muted-foreground" />
+          </div>
+        ) : speakers.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <p className="text-lg font-medium mb-1">No speakers yet</p>
+            <p className="text-sm">Add your first speaker to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {speakers.map((speaker) => {
+              const allEvents = speaker.session_speakers?.flatMap((ss) => ss.sessions?.events ? [ss.sessions.events] : []);
+              const uniqueEvents = [...new Map(allEvents.map((e) => [e?.id, e])).values()];
+              const isReturning = uniqueEvents.some((e) => e?.id !== selectedEventId);
+              return (
+                <div key={speaker.id} onClick={() => fetchSpeakerDetail(speaker.id)}
+                  className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3 mb-3">
+                    {speaker.headshot_url ? (
+                      <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
+                        {(speaker.name || "?").charAt(0)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm truncate">{speaker.name}</p>
+                        {isReturning && (
+                          <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
+                        )}
+                      </div>
+                      {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
+                      {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).map((ss) => (
+                      <Badge key={ss.session_id} variant="secondary" className="text-xs">{ss.sessions?.title}</Badge>
+                    ))}
+                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).length === 0 && (
+                      <span className="text-xs text-muted-foreground">No sessions assigned</span>
+                    )}
+                  </div>
+                  {(speaker.email || speaker.phone) && (
+                    <div className="mt-3 pt-3 border-t border-gray-50 flex gap-3">
+                      {speaker.email && <a href={`mailto:${speaker.email}`} onClick={(e) => e.stopPropagation()} className="text-xs text-blue-600 hover:underline truncate">{speaker.email}</a>}
+                      {speaker.phone && <a href={`tel:${speaker.phone}`} onClick={(e) => e.stopPropagation()} className="text-xs text-muted-foreground">{speaker.phone}</a>}
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-sm truncate">{speaker.name}</p>
-                      {isReturning && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
-                      )}
-                    </div>
-                    {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
-                    {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
-                  </div>
                 </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === eventId).map((ss) => (
-                    <Badge key={ss.session_id} variant="secondary" className="text-xs">
-                      {ss.sessions?.title}
-                    </Badge>
-                  ))}
-                  {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === eventId).length === 0 && (
-                    <span className="text-xs text-muted-foreground">No sessions assigned</span>
-                  )}
-                </div>
-
-                {(speaker.email || speaker.phone) && (
-                  <div className="mt-3 pt-3 border-t border-gray-50 flex gap-3">
-                    {speaker.email && (
-                      <a href={`mailto:${speaker.email}`} onClick={(e) => e.stopPropagation()} className="text-xs text-blue-600 hover:underline truncate">
-                        {speaker.email}
-                      </a>
-                    )}
-                    {speaker.phone && (
-                      <a href={`tel:${speaker.phone}`} onClick={(e) => e.stopPropagation()} className="text-xs text-muted-foreground">
-                        {speaker.phone}
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Add Speaker Modal */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Speaker</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Add Speaker</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
             {[
               { key: "name", label: "Name *", placeholder: "Jane Smith" },
@@ -263,11 +273,8 @@ export default function Speakers() {
             ].map(({ key, label, placeholder }) => (
               <div key={key}>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">{label}</label>
-                <Input
-                  placeholder={placeholder}
-                  value={form[key as keyof typeof form]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                />
+                <Input placeholder={placeholder} value={form[key as keyof typeof form]}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
               </div>
             ))}
             <div className="flex gap-2 pt-2">
@@ -278,14 +285,11 @@ export default function Speakers() {
         </DialogContent>
       </Dialog>
 
-      {/* Speaker Profile Modal */}
+      {/* Speaker Detail Modal */}
       {selected && (
         <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Speaker Profile</DialogTitle>
-            </DialogHeader>
-
+            <DialogHeader><DialogTitle>Speaker Profile</DialogTitle></DialogHeader>
             <div className="flex items-start gap-4 mt-2">
               {selected.headshot_url ? (
                 <img src={selected.headshot_url} alt={selected.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
@@ -299,12 +303,8 @@ export default function Speakers() {
                 {selected.job_title && <p className="text-sm text-muted-foreground">{selected.job_title}</p>}
                 {selected.company && <p className="text-sm text-muted-foreground">{selected.company}</p>}
                 <div className="flex gap-3 mt-2">
-                  {selected.email && (
-                    <a href={`mailto:${selected.email}`} className="text-xs text-blue-600 hover:underline">{selected.email}</a>
-                  )}
-                  {selected.phone && (
-                    <a href={`tel:${selected.phone}`} className="text-xs text-muted-foreground">{selected.phone}</a>
-                  )}
+                  {selected.email && <a href={`mailto:${selected.email}`} className="text-xs text-blue-600 hover:underline">{selected.email}</a>}
+                  {selected.phone && <a href={`tel:${selected.phone}`} className="text-xs text-muted-foreground">{selected.phone}</a>}
                 </div>
               </div>
             </div>
@@ -324,28 +324,22 @@ export default function Speakers() {
                           {ss.sessions?.events?.name} · {ss.sessions?.day ? new Date(ss.sessions.day).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""}
                         </p>
                       </div>
-                      {isOrganiser && ss.sessions?.event_id === eventId && (
+                      {isOrganiser && ss.sessions?.event_id === selectedEventId && (
                         <Button variant="ghost" size="sm" className="text-xs text-red-500 hover:text-red-700"
-                          onClick={() => handleUnassign(selected.id, ss.session_id)}>
-                          Remove
-                        </Button>
+                          onClick={() => handleUnassign(selected.id, ss.session_id)}>Remove</Button>
                       )}
                     </div>
                   ))}
                 </div>
               )}
-
               {isOrganiser && availableSessions.length > 0 && (
                 <div className="mt-3">
                   <p className="text-xs font-medium text-muted-foreground mb-1">Assign to session</p>
                   <div className="space-y-1">
-                    {availableSessions.filter((s) => s.event_id === eventId).map((s) => (
-                      <button
-                        key={s.id}
-                        disabled={assigning === s.id}
+                    {availableSessions.map((s) => (
+                      <button key={s.id} disabled={assigning === s.id}
                         onClick={() => handleAssign(selected.id, s.id)}
-                        className="w-full text-left text-sm px-3 py-2 rounded-lg border border-dashed border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                      >
+                        className="w-full text-left text-sm px-3 py-2 rounded-lg border border-dashed border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50">
                         {assigning === s.id ? "Assigning..." : `+ ${s.title}`}
                       </button>
                     ))}
@@ -359,25 +353,25 @@ export default function Speakers() {
               <div className="mt-4">
                 <h3 className="text-sm font-semibold mb-2">Timeline</h3>
                 <div className="space-y-2">
-                  {selected.speaker_comms_log.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()).map((log) => (
-                    <div key={log.id} className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium">{ACTION_LABELS[log.action_type] ?? log.action_type}</p>
-                        {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
-                        <p className="text-xs text-muted-foreground">{new Date(log.sent_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                  {[...selected.speaker_comms_log]
+                    .sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
+                    .map((log) => (
+                      <div key={log.id} className="flex items-start gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium">{ACTION_LABELS[log.action_type] ?? log.action_type}</p>
+                          {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
+                          <p className="text-xs text-muted-foreground">{new Date(log.sent_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
 
             {isOrganiser && (
               <div className="mt-4 pt-4 border-t">
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)}>
-                  Remove Speaker
-                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)}>Remove Speaker</Button>
               </div>
             )}
           </DialogContent>
