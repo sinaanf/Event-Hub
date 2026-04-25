@@ -221,35 +221,41 @@ export default function Speakers() {
               const uniqueEvents = [...new Map(allEvents.map((e) => [e?.id, e])).values()];
               const isReturning = uniqueEvents.some((e) => e?.id !== selectedEventId);
               return (
-                <><div key={speaker.id} onClick={() => fetchSpeakerDetail(speaker.id)}
-                      className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-3 mb-3">
-                          {speaker.headshot_url && speaker.headshot_url !== "-" ? (
-                              <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-                          ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
-                                  {(speaker.name || "?").charAt(0)}
-                              </div>
-                          )}
+                <div key={speaker.id} onClick={() => fetchSpeakerDetail(speaker.id)}
+                  className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow">
+
+                  {/* Avatar + name */}
+                  <div className="flex items-start gap-3 mb-3">
+                    {speaker.headshot_url && speaker.headshot_url !== "-" ? (
+                      <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
+                        {(speaker.name || "?").charAt(0)}
                       </div>
-                      <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-sm truncate">{speaker.name}</p>
-                              {isReturning && (
-                                  <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
-                              )}
-                          </div>
-                          {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
-                          {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm truncate">{speaker.name}</p>
+                        {isReturning && (
+                          <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
+                        )}
                       </div>
-                  </div><div className="flex flex-wrap gap-1">
-                          {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).map((ss) => (
-                              <Badge key={ss.session_id} variant="secondary" className="text-xs">{ss.sessions?.title}</Badge>
-                          ))}
-                          {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).length === 0 && (
-                              <span className="text-xs text-muted-foreground">No sessions assigned</span>
-                          )}
-                      </div></>
+                      {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
+                      {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
+                    </div>
+                  </div>
+
+                  {/* Session badges */}
+                  <div className="flex flex-wrap gap-1">
+                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).map((ss) => (
+                      <Badge key={ss.session_id} variant="secondary" className="text-xs">{ss.sessions?.title}</Badge>
+                    ))}
+                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).length === 0 && (
+                      <span className="text-xs text-muted-foreground">No sessions assigned</span>
+                    )}
+                  </div>
+
+                  {/* Contact */}
                   {(speaker.email || speaker.phone) && (
                     <div className="mt-3 pt-3 border-t border-gray-50 flex gap-3">
                       {speaker.email && <a href={`mailto:${speaker.email}`} onClick={(e) => e.stopPropagation()} className="text-xs text-blue-600 hover:underline truncate">{speaker.email}</a>}
