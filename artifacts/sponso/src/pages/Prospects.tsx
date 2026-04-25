@@ -349,7 +349,7 @@ export default function Prospects() {
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1 p-8 bg-[#FAFAF9]">
       <div className="max-w-3xl">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
