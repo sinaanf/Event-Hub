@@ -65,13 +65,13 @@ const SESSION_TYPES = ["keynote", "panel", "workshop", "roundtable", "fireside"]
 const SECTORS = ["Sustainability", "Finance", "Supply Chain", "Healthcare", "Legal", "Insurance", "AI", "Technology", "Real Estate", "Marketing"];
 const STATUSES = ["draft", "confirmed", "cancelled"];
 
-const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  keynote:    { bg: "hsl(243,75%,94%)", border: "hsl(243,75%,65%)", text: "hsl(243,75%,30%)" },
-  panel:      { bg: "hsl(210,85%,94%)", border: "hsl(210,85%,60%)", text: "hsl(210,85%,28%)" },
-  workshop:   { bg: "hsl(142,60%,93%)", border: "hsl(142,60%,55%)", text: "hsl(142,60%,24%)" },
-  roundtable: { bg: "hsl(38,85%,93%)",  border: "hsl(38,85%,55%)",  text: "hsl(38,85%,28%)"  },
-  fireside:   { bg: "hsl(0,75%,94%)",   border: "hsl(0,75%,60%)",   text: "hsl(0,75%,30%)"   },
-  default:    { bg: "hsl(0,0%,94%)",    border: "hsl(0,0%,70%)",    text: "hsl(0,0%,30%)"    },
+const TYPE_COLORS: Record<string, { border: string; badge: string; badgeText: string }> = {
+  keynote:    { border: "#1C1C1E", badge: "#1C1C1E",  badgeText: "white" },
+  panel:      { border: "#6B7280", badge: "#374151",  badgeText: "white" },
+  workshop:   { border: "#1D9E75", badge: "#0F6E56",  badgeText: "white" },
+  roundtable: { border: "#EF9F27", badge: "#FFF8EC",  badgeText: "#854F0B" },
+  fireside:   { border: "#EF9F27", badge: "#1C1C1E",  badgeText: "white" },
+  default:    { border: "#D1D5DB", badge: "#F3F4F6",  badgeText: "#6B7280" },
 };
 
 const EMPTY_SESSION_FORM: SessionForm = {
@@ -103,24 +103,53 @@ function timeFromISO(iso: string): string {
 }
 
 const inputCls =
-  "text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] focus:ring-offset-1 w-full bg-white";
+  "text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1C1C1E] focus:ring-offset-1 w-full bg-white";
 
 // ─── Custom Event Component ───────────────────────────────────────────────────
 function SessionCard({ event }: { event: CalEvent }) {
   const s = event.resource;
   const colors = TYPE_COLORS[s.session_type ?? ""] ?? TYPE_COLORS.default;
+  const isBreak = !s.session_type;
+
+  if (isBreak) {
+    return (
+      <div className="h-full rounded px-2 py-1 overflow-hidden" style={{ background: "#F5F4F1", borderLeft: "2px solid #D1D5DB" }}>
+        <p style={{ fontSize: 9, color: "#9CA3AF", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{event.title}</p>
+      </div>
+    );
+  }
+
   return (
     <div
+      className="h-full overflow-hidden"
       style={{
-        background: colors.bg,
+        background: "white",
         borderLeft: `3px solid ${colors.border}`,
-        color: colors.text,
+        borderTop: "0.5px solid #E5E7EB",
+        borderRight: "0.5px solid #E5E7EB",
+        borderBottom: "0.5px solid #E5E7EB",
+        borderRadius: "0 4px 4px 0",
+        padding: "4px 6px",
       }}
-      className="h-full rounded px-2 py-1 text-[11px] overflow-hidden leading-tight"
     >
-      <p className="font-semibold truncate">{event.title}</p>
+      <p style={{ fontSize: 10, fontWeight: 600, color: "#111827", lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+        {event.title}
+      </p>
       {s.session_type && (
-        <p className="opacity-70 capitalize mt-0.5">{s.session_type}</p>
+        <span style={{
+          display: "inline-block",
+          fontSize: 7,
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          padding: "1px 5px",
+          borderRadius: 2,
+          background: colors.badge,
+          color: colors.badgeText,
+          marginTop: 2,
+        }}>
+          {s.session_type}
+        </span>
       )}
     </div>
   );
@@ -186,10 +215,6 @@ export default function LiveAgenda() {
       }));
   }, [sessions]);
 
-  const resources = useMemo(
-    () => tracks.map((t) => ({ id: t.id, title: t.name, colour: t.colour })),
-    [tracks]
-  );
 
   // ── Fetch ──
   async function fetchEvents() {
@@ -400,7 +425,7 @@ export default function LiveAgenda() {
         {isOrganiser && (
           <button
             onClick={() => setShowEventModal(true)}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] transition-colors"
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-[#1C1C1E] text-white hover:bghover:bg-[#333333]-[hsl(243,75%,52%)] transition-colors"
           >
             <Plus size={15} />
             New event
@@ -420,7 +445,7 @@ export default function LiveAgenda() {
             <select
               value={selectedEventId ?? ""}
               onChange={(e) => setSelectedEventId(e.target.value || null)}
-              className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] max-w-xs"
+              className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#1C1C1E] max-w-xs"
             >
               {events.map((e) => (
                 <option key={e.id} value={e.id}>{e.name}</option>
@@ -444,7 +469,7 @@ export default function LiveAgenda() {
           <p className="text-sm font-medium text-foreground">Create your first event to get started</p>
           <button
             onClick={() => setShowEventModal(true)}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] transition-colors"
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[#333333] transition-colors"
           >
             <Plus size={15} />
             Create event
@@ -468,7 +493,7 @@ export default function LiveAgenda() {
                     onClick={() => setSelectedDate(day)}
                     className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
                       isSelected
-                        ? "bg-[hsl(243,75%,59%)] text-white"
+                        ? "bg-[#1C1C1E] text-white"
                         : "text-muted-foreground hover:bg-gray-100"
                     }`}
                   >
@@ -512,7 +537,7 @@ export default function LiveAgenda() {
               {isOrganiser && (
                 <button
                   onClick={() => setShowTrackModal(true)}
-                  className="flex items-center gap-1 text-[11px] text-[hsl(243,75%,55%)] hover:text-[hsl(243,75%,45%)] transition-colors"
+                  className="flex items-center gap-1 text-[11px] text-[#EF9F27] hover:text-[hsl(243,75%,45%)] transition-colors"
                 >
                   <Plus size={12} />
                   Add track
@@ -530,7 +555,7 @@ export default function LiveAgenda() {
                 {isOrganiser && (
                   <button
                     onClick={() => setShowTrackModal(true)}
-                    className="flex items-center gap-2 text-sm px-4 py-2 rounded-md border border-[hsl(243,75%,70%)] text-[hsl(243,75%,55%)] hover:bg-[hsl(243,75%,97%)] transition-colors"
+                    className="flex items-center gap-2 text-sm px-4 py-2 rounded-md border border-[#EF9F27] text-[#EF9F27] hover:bg-[hsl(243,75%,97%)] transition-colors"
                   >
                     <Plus size={14} />
                     Add first track
@@ -544,11 +569,11 @@ export default function LiveAgenda() {
                   .rbc-time-view { border: none; }
                   .rbc-time-header { border-bottom: 1px solid #f0f0f0; }
                   .rbc-time-content { border-top: none; }
-                  .rbc-timeslot-group { border-bottom: 1px solid #f7f7f7; min-height: 40px; }
+                  .rbc-timeslot-group { border-bottom: 1px solid #f7f7f7; min-height: 60px; }
                   .rbc-time-slot { border-top: none; }
-                  .rbc-current-time-indicator { background: hsl(243,75%,59%); }
+                  .rbc-current-time-indicator { background: #EF9F27; }
                   .rbc-event { padding: 0; border: none !important; background: transparent !important; }
-                  .rbc-event.rbc-selected { box-shadow: 0 0 0 2px hsl(243,75%,59%); border-radius: 4px; }
+                  .rbc-event.rbc-selected { box-shadow: 0 0 0 2px #1C1C1E; border-radius: 4px; }
                   .rbc-day-slot .rbc-event { border-radius: 4px; }
                   .rbc-label { font-size: 11px; color: #9ca3af; }
                   .rbc-resource-header { font-size: 12px; font-weight: 600; padding: 10px 12px; text-align: left; border-left: 1px solid #f0f0f0; }
@@ -558,9 +583,6 @@ export default function LiveAgenda() {
                 <Calendar
                   localizer={localizer}
                   events={calendarEvents}
-                  resources={resources.length > 0 ? resources : undefined}
-                  resourceIdAccessor="id"
-                  resourceTitleAccessor="title"
                   defaultView={Views.DAY}
                   views={[Views.DAY]}
                   date={selectedDate}
@@ -573,6 +595,8 @@ export default function LiveAgenda() {
                   components={{ event: SessionCard as any }}
                   toolbar={false}
                   scrollToTime={setHours(setMinutes(new Date(), 0), 8)}
+                  min={setHours(setMinutes(new Date(), 0), 8)}
+                  max={setHours(setMinutes(new Date(), 0), 21)}
                 />
               </div>
             )}
@@ -626,7 +650,7 @@ export default function LiveAgenda() {
               <button
                 onClick={handleCreateEvent}
                 disabled={savingEvent || !eventForm.name || !eventForm.start_date || !eventForm.end_date}
-                className="text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-60 flex items-center gap-2"
+                className="text-sm px-4 py-2 rounded-md bg-[#1C1C1E] text-white hover:bg-[#333333] disabled:opacity-60 flex items-center gap-2"
               >
                 {savingEvent && <Loader2 size={13} className="animate-spin" />}
                 Create event
@@ -666,7 +690,7 @@ export default function LiveAgenda() {
               <button
                 onClick={handleCreateTrack}
                 disabled={savingTrack || !newTrackName.trim()}
-                className="text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-60 flex items-center gap-2"
+                className="text-sm px-4 py-2 rounded-md bg-[#1C1C1E] text-white hover:bg-[#333333] disabled:opacity-60 flex items-center gap-2"
               >
                 {savingTrack && <Loader2 size={13} className="animate-spin" />}
                 Add track
@@ -686,7 +710,7 @@ export default function LiveAgenda() {
                   {sessionModal === "edit" ? "Edit session" : "Add session"}
                 </h2>
                 {savingSession && (
-                  <p className="text-xs text-[hsl(243,75%,55%)] mt-0.5 flex items-center gap-1">
+                  <p className="text-xs text-[#EF9F27] mt-0.5 flex items-center gap-1">
                     <Sparkles size={11} />
                     Generating audience & sponsor fit…
                   </p>
@@ -764,7 +788,7 @@ export default function LiveAgenda() {
                     <div className="flex-1 bg-gray-50 rounded-lg px-4 py-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">In the room</p>
-                        <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded border border-[hsl(243,75%,80%)] text-[hsl(243,75%,55%)] bg-[hsl(243,75%,97%)]">
+                        <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded border border-[hsl(243,75%,80%)] text-[#EF9F27] bg-[hsl(243,75%,97%)]">
                           <Sparkles size={8} />AI
                         </span>
                         <button onClick={() => handleRegenerate(editingSession.id)} disabled={regeneratingId === editingSession.id} className="text-muted-foreground hover:text-foreground disabled:opacity-40">
@@ -778,7 +802,7 @@ export default function LiveAgenda() {
                     <div className="flex-1 bg-gray-50 rounded-lg px-4 py-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Why sponsor</p>
-                        <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded border border-[hsl(243,75%,80%)] text-[hsl(243,75%,55%)] bg-[hsl(243,75%,97%)]">
+                        <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded border border-[hsl(243,75%,80%)] text-[#EF9F27] bg-[hsl(243,75%,97%)]">
                           <Sparkles size={8} />AI
                         </span>
                       </div>
@@ -789,7 +813,7 @@ export default function LiveAgenda() {
               )}
 
               <div className="flex items-start gap-2 text-xs text-muted-foreground bg-[hsl(243,75%,97%)] border border-[hsl(243,75%,90%)] rounded-md px-3 py-2.5">
-                <Sparkles size={12} className="text-[hsl(243,75%,55%)] mt-0.5 shrink-0" />
+                <Sparkles size={12} className="text-[#EF9F27] mt-0.5 shrink-0" />
                 Claude automatically generates audience profile and sponsor fit on save.
               </div>
             </div>
@@ -805,7 +829,7 @@ export default function LiveAgenda() {
                 <button
                   onClick={handleSaveSession}
                   disabled={savingSession || !sessionForm.title.trim()}
-                  className="text-sm px-4 py-2 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] disabled:opacity-60 flex items-center gap-2"
+                  className="text-sm px-4 py-2 rounded-md bg-[#1C1C1E] text-white hover:bg-[#333333] disabled:opacity-60 flex items-center gap-2"
                 >
                   {savingSession && <Loader2 size={13} className="animate-spin" />}
                   {sessionModal === "edit" ? "Save changes" : "Add session"}

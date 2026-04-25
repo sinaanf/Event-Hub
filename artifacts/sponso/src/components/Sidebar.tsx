@@ -43,70 +43,94 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col border-r border-border bg-sidebar h-screen sticky top-0">
-      <div className="px-5 py-5 border-b border-border">
-        <span className="text-[17px] font-semibold tracking-tight text-foreground">
+    <aside className="w-52 shrink-0 flex flex-col h-screen sticky top-0" style={{ background: "#1C1C1E" }}>
+      {/* Wordmark */}
+      <div className="px-5 py-5 shrink-0">
+        <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.04em", color: "white", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
           sinoo
         </span>
       </div>
 
-      <nav className="flex flex-col gap-0.5 p-3 flex-1">
-        {(isOrganiser ? ORGANISER_NAV : SALESPERSON_NAV).map(({ label, icon: Icon, href }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive(href)
-                ? "bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] font-medium"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
-          >
-            <Icon
-              size={16}
-              className={isActive(href) ? "text-[hsl(243,75%,55%)]" : ""}
-            />
-            {label}
-          </Link>
-        ))}
+      {/* Nav */}
+      <nav className="flex flex-col gap-0.5 px-3 flex-1">
+        {(isOrganiser ? ORGANISER_NAV : SALESPERSON_NAV).map(({ label, icon: Icon, href }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "7px 10px",
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: active ? 500 : 400,
+                color: active ? "white" : "rgba(255,255,255,0.45)",
+                background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                transition: "all 0.15s",
+                textDecoration: "none",
+              }}
+            >
+              <Icon size={15} style={{ color: active ? "#EF9F27" : "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="px-3 pb-3 border-t border-border pt-3 flex flex-col gap-0.5">
+      {/* Bottom */}
+      <div className="px-3 pb-4 shrink-0" style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
         <Link
           href="/settings"
-          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-            location.startsWith("/settings")
-              ? "bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] font-medium"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-          }`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "7px 10px",
+            borderRadius: 6,
+            fontSize: 13,
+            color: location.startsWith("/settings") ? "white" : "rgba(255,255,255,0.45)",
+            background: location.startsWith("/settings") ? "rgba(255,255,255,0.08)" : "transparent",
+            textDecoration: "none",
+            marginBottom: 2,
+          }}
         >
-          <Settings
-            size={16}
-            className={location.startsWith("/settings") ? "text-[hsl(243,75%,55%)]" : ""}
-          />
+          <Settings size={15} style={{ color: "rgba(255,255,255,0.35)" }} />
           Settings
         </Link>
 
         <button
           onClick={toggleViewAs}
-          title={`Viewing as ${effectiveRole}${isViewingOverride ? " (preview)" : ""}. Click to switch view.`}
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-muted-foreground hover:bg-secondary hover:text-foreground w-full text-left"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "7px 10px",
+            borderRadius: 6,
+            fontSize: 12,
+            color: "rgba(255,255,255,0.4)",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            width: "100%",
+            textAlign: "left",
+          }}
         >
-          <span
-            className={`inline-block w-2 h-2 rounded-full shrink-0 ${
-              isOrganiser ? "bg-[hsl(243,75%,59%)]" : "bg-amber-500"
-            }`}
-          />
-          <span className="text-xs">
-            {isOrganiser ? "Organiser" : "Salesperson"}
-          </span>
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+            background: isOrganiser ? "#EF9F27" : "rgba(255,255,255,0.3)",
+          }} />
+          <span>{isOrganiser ? "Organiser" : "Salesperson"}</span>
           {isViewingOverride && (
-            <span className="text-[10px] text-muted-foreground ml-auto">preview</span>
+            <span style={{ marginLeft: "auto", fontSize: 10, opacity: 0.5 }}>preview</span>
           )}
         </button>
 
         {user && (
-          <div className="px-3 pt-1 pb-0.5">
-            <p className="text-xs text-muted-foreground truncate" title={user.email}>
+          <div style={{ padding: "4px 10px" }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {user.email}
             </p>
           </div>
@@ -114,9 +138,22 @@ export function Sidebar() {
 
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors w-full text-left"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "7px 10px",
+            borderRadius: 6,
+            fontSize: 13,
+            color: "rgba(255,255,255,0.35)",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            width: "100%",
+            textAlign: "left",
+          }}
         >
-          <LogOut size={16} />
+          <LogOut size={15} style={{ color: "rgba(255,255,255,0.25)" }} />
           Sign out
         </button>
       </div>

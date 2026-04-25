@@ -174,7 +174,12 @@ export default function Speakers() {
           <p className="text-sm text-muted-foreground mt-0.5">Manage your speaker directory and session assignments.</p>
         </div>
         {isOrganiser && selectedEventId && (
-          <Button onClick={() => setShowAdd(true)}>+ Add Speaker</Button>
+          <button
+          onClick={() => setShowAdd(true)}
+          style={{ background: "#1C1C1E", color: "white", fontSize: 13, padding: "7px 14px", borderRadius: 6, border: "none",       cursor: "pointer" }}
+>
+  + Add Speaker
+</button>
         )}
       </div>
 
@@ -190,7 +195,7 @@ export default function Speakers() {
             <select
               value={selectedEventId ?? ""}
               onChange={(e) => setSelectedEventId(e.target.value || null)}
-              className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] max-w-xs"
+              className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#1C1C1E] max-w-xs"
             >
               {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
@@ -216,35 +221,35 @@ export default function Speakers() {
               const uniqueEvents = [...new Map(allEvents.map((e) => [e?.id, e])).values()];
               const isReturning = uniqueEvents.some((e) => e?.id !== selectedEventId);
               return (
-                <div key={speaker.id} onClick={() => fetchSpeakerDetail(speaker.id)}
-                  className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-3 mb-3">
-                    {speaker.headshot_url ? (
-                      <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
-                        {(speaker.name || "?").charAt(0)}
+                <><div key={speaker.id} onClick={() => fetchSpeakerDetail(speaker.id)}
+                      className="bg-white border border-gray-100 rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3 mb-3">
+                          {speaker.headshot_url && speaker.headshot_url !== "-" ? (
+                              <img src={speaker.headshot_url} alt={speaker.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-lg font-semibold text-gray-400">
+                                  {(speaker.name || "?").charAt(0)}
+                              </div>
+                          )}
                       </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-sm truncate">{speaker.name}</p>
-                        {isReturning && (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
-                        )}
+                      <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-sm truncate">{speaker.name}</p>
+                              {isReturning && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Returning</Badge>
+                              )}
+                          </div>
+                          {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
+                          {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
                       </div>
-                      {speaker.job_title && <p className="text-xs text-muted-foreground truncate">{speaker.job_title}</p>}
-                      {speaker.company && <p className="text-xs text-muted-foreground truncate">{speaker.company}</p>}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).map((ss) => (
-                      <Badge key={ss.session_id} variant="secondary" className="text-xs">{ss.sessions?.title}</Badge>
-                    ))}
-                    {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).length === 0 && (
-                      <span className="text-xs text-muted-foreground">No sessions assigned</span>
-                    )}
-                  </div>
+                  </div><div className="flex flex-wrap gap-1">
+                          {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).map((ss) => (
+                              <Badge key={ss.session_id} variant="secondary" className="text-xs">{ss.sessions?.title}</Badge>
+                          ))}
+                          {speaker.session_speakers?.filter((ss) => ss.sessions?.event_id === selectedEventId).length === 0 && (
+                              <span className="text-xs text-muted-foreground">No sessions assigned</span>
+                          )}
+                      </div></>
                   {(speaker.email || speaker.phone) && (
                     <div className="mt-3 pt-3 border-t border-gray-50 flex gap-3">
                       {speaker.email && <a href={`mailto:${speaker.email}`} onClick={(e) => e.stopPropagation()} className="text-xs text-blue-600 hover:underline truncate">{speaker.email}</a>}
@@ -271,11 +276,14 @@ export default function Speakers() {
               { key: "phone", label: "Phone", placeholder: "+44 7700 900000" },
               { key: "headshot_url", label: "Headshot URL", placeholder: "https://..." },
             ].map(({ key, label, placeholder }) => (
-              <div key={key}>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">{label}</label>
-                <Input placeholder={placeholder} value={form[key as keyof typeof form]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
-              </div>
+              <div className="flex gap-2 pt-2">
+  <button onClick={handleAddSpeaker} style={{ flex: 1, background: "#1C1C1E", color: "white", fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "none", cursor: "pointer" }}>
+    Add Speaker
+  </button>
+  <button onClick={() => setShowAdd(false)} style={{ fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "0.5px solid #E5E7EB", background: "white", cursor: "pointer" }}>
+    Cancel
+  </button>
+</div>
             ))}
             <div className="flex gap-2 pt-2">
               <Button className="flex-1" onClick={handleAddSpeaker}>Add Speaker</Button>
