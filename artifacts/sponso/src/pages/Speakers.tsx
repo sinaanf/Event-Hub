@@ -305,7 +305,7 @@ export default function Speakers() {
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Speaker Profile</DialogTitle></DialogHeader>
             <div className="flex items-start gap-4 mt-2">
-              {selected.headshot_url ? (
+              {selected.headshot_url && selected.headshot_url !== "-" ? (
                 <img src={selected.headshot_url} alt={selected.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-2xl font-semibold text-gray-400 flex-shrink-0">
