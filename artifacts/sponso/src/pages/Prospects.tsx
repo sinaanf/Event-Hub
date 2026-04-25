@@ -70,7 +70,7 @@ function ContactCard({ contact }: { contact: ContactPerson }) {
         <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
         {contact.email && (
           <div className="flex items-center gap-2 mt-1">
-            <a href={`mailto:${contact.email}`} className="text-xs text-[hsl(243,75%,50%)] hover:underline truncate">{contact.email}</a>
+            <a href={`mailto:${contact.email}`} className="text-xs text-[#EF9F27] hover:underline truncate">{contact.email}</a>
             <button onClick={() => { navigator.clipboard.writeText(contact.email).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
               className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 text-muted-foreground hover:bg-white transition-colors">
               {copied ? "Copied!" : "Copy"}
@@ -146,7 +146,7 @@ function ProspectCard({ prospect, sessionTitle, valueProp, eventName, eventLocat
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-50 border border-dashed border-gray-200">
         <span className="text-xs text-muted-foreground line-through">{prospect.company_name}</span>
         <span className="text-xs text-muted-foreground">· skipped</span>
-        <button onClick={() => setState((s) => ({ ...s, status: "idle" }))} className="ml-auto text-xs text-[hsl(243,75%,59%)] hover:underline">Undo</button>
+        <button onClick={() => setState((s) => ({ ...s, status: "idle" }))} className="ml-auto text-xs text-[#EF9F27] hover:underline">Undo</button>
       </div>
     );
   }
@@ -156,12 +156,12 @@ function ProspectCard({ prospect, sessionTitle, valueProp, eventName, eventLocat
       <div className="flex items-start justify-between gap-3 mb-2">
         <div>
           <p className="text-sm font-semibold text-foreground">{prospect.company_name}</p>
-          <p className="text-xs text-[hsl(243,75%,50%)] font-medium mt-0.5">{prospect.contact_role}</p>
+          <p className="text-xs text-[#EF9F27] font-medium mt-0.5">{prospect.contact_role}</p>
         </div>
         {state.status === "idle" && (
           <div className="flex gap-2 shrink-0">
             <button onClick={() => setState((s) => ({ ...s, status: "skipped" }))} className="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors">Skip</button>
-            <button onClick={approve} className="text-xs px-3 py-1.5 rounded-md bg-[hsl(243,75%,59%)] text-white hover:bg-[hsl(243,75%,52%)] transition-colors">Approve</button>
+            <button onClick={approve} className="text-xs px-3 py-1.5 rounded-md bg-[#1C1C1E] text-white hover:bg-[#333333] transition-colors">Approve</button>
           </div>
         )}
         {state.status === "approved" && <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium shrink-0">Approved</span>}
@@ -183,7 +183,7 @@ function ProspectCard({ prospect, sessionTitle, valueProp, eventName, eventLocat
                 </div>
               )}
               <textarea value={state.email} onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))} rows={8}
-                className="w-full text-xs leading-relaxed border border-gray-200 rounded-md px-3 py-2.5 resize-y focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] font-mono" />
+                className="w-full text-xs leading-relaxed border border-gray-200 rounded-md px-3 py-2.5 resize-y focus:outline-none focus:ring-2 focus:ring-[#1C1C1E] font-mono" />
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <button onClick={() => { const text = state.emailSubject ? `Subject: ${state.emailSubject}\n\n${state.email}` : state.email; navigator.clipboard.writeText(text).then(() => { setState((s) => ({ ...s, copied: true })); setTimeout(() => setState((s) => ({ ...s, copied: false })), 2000); }); }}
                   className="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-muted-foreground hover:bg-gray-50 transition-colors">
@@ -191,7 +191,7 @@ function ProspectCard({ prospect, sessionTitle, valueProp, eventName, eventLocat
                 </button>
                 {!state.contact && (
                   <button onClick={findContact} disabled={state.contactLoading}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-[hsl(243,75%,80%)] text-[hsl(243,75%,50%)] hover:bg-[hsl(243,75%,97%)] disabled:opacity-60 transition-colors">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-[#1C1C1E] text-[#EF9F27] hover:bg-[#FFF8EC] disabled:opacity-60 transition-colors">
                     {state.contactLoading && <Spinner size={12} />}
                     {state.contactLoading ? "Searching…" : "Find contact"}
                   </button>
@@ -260,7 +260,7 @@ function SessionProspects({ session, eventName, eventLocation }: { session: Sess
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-semibold text-foreground leading-snug">{session.title}</span>
             {session.session_type && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[hsl(243,75%,97%)] text-[hsl(243,75%,40%)] font-medium shrink-0">{sessionTypeLabel(session.session_type)}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FFF8EC] text-[#EF9F27] font-medium shrink-0">{sessionTypeLabel(session.session_type)}</span>
             )}
           </div>
           <p className="text-xs text-muted-foreground">{formatTime(session.start_time)} – {formatTime(session.end_time)}</p>
@@ -270,7 +270,7 @@ function SessionProspects({ session, eventName, eventLocation }: { session: Sess
       </button>
 
       {open && (
-        <div className="border-t border-border px-5 py-4 bg-[hsl(243,75%,99%)]">
+        <div className="border-t border-border px-5 py-4 bg-[#FFF8EC]">
           {(session.audience || session.sponsor_fit) && (
             <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {session.audience && (
@@ -358,7 +358,7 @@ export default function Prospects() {
           </div>
           {!eventsLoading && events.length > 1 && (
             <select value={selectedEventId || ""} onChange={(e) => setSelectedEventId(e.target.value)}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)] shrink-0">
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-[#1C1C1E] shrink-0">
               {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
           )}
@@ -368,7 +368,7 @@ export default function Prospects() {
 
         {!eventsLoading && events.length === 0 && (
           <div className="bg-white border border-border rounded-xl p-8 flex flex-col items-center text-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[hsl(243,75%,97%)] flex items-center justify-center"><Target size={20} className="text-[hsl(243,75%,55%)]" /></div>
+            <div className="w-10 h-10 rounded-full bg-[#FFF8EC] flex items-center justify-center"><Target size={20} className="text-[#EF9F27]" /></div>
             <p className="text-sm font-medium text-foreground">No events found</p>
             <p className="text-xs text-muted-foreground">Create an event in the Agenda Builder first.</p>
           </div>
@@ -380,7 +380,7 @@ export default function Prospects() {
 
         {!eventsLoading && !sessionsLoading && sessions.length === 0 && events.length > 0 && (
           <div className="bg-white border border-border rounded-xl p-8 flex flex-col items-center text-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[hsl(243,75%,97%)] flex items-center justify-center"><Target size={20} className="text-[hsl(243,75%,55%)]" /></div>
+            <div className="w-10 h-10 rounded-full bg-[#FFF8EC] flex items-center justify-center"><Target size={20} className="text-[#EF9F27]" /></div>
             <p className="text-sm font-medium text-foreground">No sponsorable sessions yet</p>
             <p className="text-xs text-muted-foreground">Add sessions with descriptions in the Agenda Builder and the AI will generate audience and sponsor fit profiles.</p>
           </div>
