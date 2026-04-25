@@ -63,13 +63,23 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
   const { data, error } = await supabase
     .from("speakers")
-    .select("*")
+    .select(`
+      *,
+      session_speakers (
+        session_id,
+        sessions (
+          id, title, start_time, end_time, day, status, event_id
+        )
+      ),
+      speaker_comms_log (
+        id, action_type, sent_at, notes, event_id
+      )
+    `)
     .eq("id", req.params.id)
     .single();
   console.log("[speakers/:id] data:", JSON.stringify(data), "error:", JSON.stringify(error));
   if (error || !data) return res.status(404).json({ error: error?.message || "Not found", data, error });
   return res.json(data);
-});
 
 // POST /speakers
 router.post(
