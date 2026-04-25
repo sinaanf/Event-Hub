@@ -11,7 +11,7 @@ const STAGE_COLORS: Record<Stage, { bg: string; text: string; dot: string }> = {
   "Identified":    { bg: "bg-gray-100",    text: "text-gray-600",    dot: "bg-gray-400" },
   "Contacted":     { bg: "bg-blue-50",     text: "text-blue-700",    dot: "bg-blue-400" },
   "Opened":        { bg: "bg-indigo-50",   text: "text-indigo-700",  dot: "bg-indigo-400" },
-  "Replied":       { bg: "bg-purple-50",   text: "text-purple-700",  dot: "bg-purple-400" },
+  "Replied":       { bg: "bg-orange-50",   text: "text-orange-700",  dot: "bg-orange-400" },
   "Proposal Sent": { bg: "bg-amber-50",    text: "text-amber-700",   dot: "bg-amber-400" },
   "Closed Won":    { bg: "bg-green-50",    text: "text-green-700",   dot: "bg-green-500" },
   "Activated":     { bg: "bg-emerald-50",  text: "text-emerald-700", dot: "bg-emerald-500" },
@@ -41,7 +41,7 @@ function DetailModal({ entry, onClose, onStageChange, onDelete }: {
             <select
               value={entry.stage}
               onChange={(e) => onStageChange(entry.id, e.target.value as Stage)}
-              className={`text-xs px-2.5 py-1.5 rounded-full font-medium border-0 ${colors.bg} ${colors.text} focus:outline-none focus:ring-2 focus:ring-[hsl(243,75%,59%)]`}
+              className={`text-xs px-2.5 py-1.5 rounded-full font-medium border-0 ${colors.bg} ${colors.text} focus:outline-none focus:ring-2 focus:ring-[#1C1C1E]`}
             >
               {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -58,7 +58,7 @@ function DetailModal({ entry, onClose, onStageChange, onDelete }: {
               <div className="flex items-center gap-3 flex-wrap">
                 {entry.contact_name && <span className="text-sm font-medium text-foreground">{entry.contact_name}</span>}
                 {entry.contact_email && (
-                  <a href={`mailto:${entry.contact_email}`} className="text-sm text-[hsl(243,75%,50%)] hover:underline">
+                  <a href={`mailto:${entry.contact_email}`} className="text-sm text-[#EF9F27] hover:underline">
                     {entry.contact_email}
                   </a>
                 )}
@@ -134,7 +134,7 @@ function KanbanCard({ entry, onClick }: { entry: PipelineEntry; onClick: () => v
       draggable
       onDragStart={handleDragStart}
       onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-[hsl(243,75%,70%)] hover:shadow-sm transition-all"
+      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-[#1C1C1E] hover:shadow-sm transition-all"
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <p className="text-xs font-semibold text-foreground leading-snug">{entry.company_name}</p>
@@ -144,7 +144,7 @@ function KanbanCard({ entry, onClick }: { entry: PipelineEntry; onClick: () => v
         <p className="text-xs text-muted-foreground truncate">{entry.contact_name}</p>
       )}
       {entry.session_title && (
-        <p className="text-xs text-[hsl(243,75%,50%)] truncate mt-1">{entry.session_title}</p>
+        <p className="text-xs text-[#EF9F27] truncate mt-1">{entry.session_title}</p>
       )}
       {entry.sponsorship_angle && (
         <p className="text-xs text-gray-400 italic leading-snug mt-1.5 line-clamp-2">{entry.sponsorship_angle}</p>
@@ -177,7 +177,7 @@ function KanbanColumn({ stage, entries, onDrop, onCardClick }: {
 
   return (
     <div
-      className={`flex flex-col shrink-0 w-56 rounded-xl transition-colors ${dragOver ? "bg-[hsl(243,75%,97%)]" : "bg-gray-50"}`}
+      className={`flex flex-col shrink-0 w-56 rounded-xl transition-colors ${dragOver ? "bg-[#FFF8EC]" : "bg-gray-50"}`}
       onDragOver={handleDragOver}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
@@ -278,8 +278,8 @@ export default function Campaigns() {
       ) : entries.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center max-w-xs">
-            <div className="w-12 h-12 rounded-full bg-[hsl(243,75%,97%)] flex items-center justify-center">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(243,75%,55%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-12 h-12 rounded-full bg-[#FFF8EC] flex items-center justify-center">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF9F27" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
                 <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
               </svg>
