@@ -80,6 +80,7 @@ router.get("/:id", async (req: AuthRequest, res) => {
   console.log("[speakers/:id] data:", JSON.stringify(data), "error:", JSON.stringify(error));
   if (error || !data) return res.status(404).json({ error: error?.message || "Not found", data, error });
   return res.json(data);
+});
 
 // POST /speakers
 router.post(
