@@ -19,6 +19,7 @@ const ORGANISER_NAV = [
 ];
 
 const SALESPERSON_NAV = [
+  { label: "Live Agenda", icon: CalendarRange, href: "/live-agenda" },
   { label: "Prospects", icon: Target, href: "/prospects" },
   { label: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
