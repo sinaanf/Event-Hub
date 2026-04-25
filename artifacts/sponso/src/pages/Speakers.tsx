@@ -282,14 +282,16 @@ export default function Speakers() {
               { key: "phone", label: "Phone", placeholder: "+44 7700 900000" },
               { key: "headshot_url", label: "Headshot URL", placeholder: "https://..." },
             ].map(({ key, label, placeholder }) => (
-              <div className="flex gap-2 pt-2">
-  <button onClick={handleAddSpeaker} style={{ flex: 1, background: "#1C1C1E", color: "white", fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "none", cursor: "pointer" }}>
-    Add Speaker
-  </button>
-  <button onClick={() => setShowAdd(false)} style={{ fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "0.5px solid #E5E7EB", background: "white", cursor: "pointer" }}>
-    Cancel
-  </button>
-</div>
+              <div key={key}>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">{label}</label>
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  value={(form as Record<string, string>)[key]}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1C1C1E]"
+                />
+              </div>
             ))}
             <div className="flex gap-2 pt-2">
               <Button className="flex-1" onClick={handleAddSpeaker}>Add Speaker</Button>
